@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yönetici Paneli | Meşe Atölye</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: { cream:'#EDE4D3', paper:'#F7F1E6', walnut:'#3B2A1E', walnutlight:'#5A4230', clay:'#8B5E3C', sage:'#6B7A5E', sagedark:'#4A5641', gold:'#B8912F', ink:'#2A211B', danger:'#A3453A' },
+      fontFamily: { display:['Fraunces','serif'], body:['Work Sans','sans-serif'] }
+    } }
+  }
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="font-body text-ink antialiased">
+
+<!-- ============ HEADER (sadeleştirilmiş) ============ -->
+<header class="sticky top-0 z-50 bg-paper/90 backdrop-blur-md border-b border-walnut/10">
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between h-20">
+    <a href="index.html" class="flex items-baseline gap-2 select-none">
+      <span class="font-display font-bold text-2xl tracking-tight text-walnut">MEŞE</span>
+      <span class="font-body text-xs tracking-[0.35em] uppercase text-clay">Atölye</span>
+    </a>
+    <span class="text-xs tracking-[0.3em] uppercase text-clay">Yönetici Paneli</span>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-6 lg:px-10 py-16">
+
+  <!-- Login -->
+  <div id="adminLogin" class="max-w-sm mx-auto bg-cream/60 border border-walnut/10 rounded-2xl p-8 mt-10">
+    <h1 class="font-display text-2xl text-walnut mb-2">Yönetici Girişi</h1>
+    <p class="text-sm text-walnutlight mb-6">Ürünleri eklemek, düzenlemek veya kaldırmak için giriş yapın.</p>
+    <form id="adminLoginForm" class="flex flex-col gap-3">
+      <input type="password" id="adminPasscode" placeholder="Şifre" class="w-full border border-walnut/20 rounded-lg px-4 py-2.5 bg-paper" required>
+      <p id="adminLoginError" class="text-danger text-sm hidden">Şifre hatalı, tekrar deneyin.</p>
+      <button type="submit" class="bg-walnut text-paper px-5 py-2.5 rounded-full font-medium hover:bg-sagedark transition-colors">Giriş Yap</button>
+    </form>
+    <p class="text-xs text-walnutlight/60 mt-5 leading-relaxed">
+      Not: Bu, tarayıcı taraflı basit bir erişim korumasıdır, gerçek bir kimlik doğrulama sistemi değildir. Demo şifre: <span class="font-mono">atolye2026</span>
+    </p>
+  </div>
+
+  <!-- Panel -->
+  <div id="adminPanel" class="hidden">
+    <div class="flex items-center justify-between mb-10 flex-wrap gap-4">
+      <div>
+        <p class="tracking-[0.3em] text-xs uppercase text-clay mb-2">Yönetici Paneli</p>
+        <h1 class="font-display text-3xl text-walnut">Ürün Yönetimi</h1>
+      </div>
+      <div class="flex gap-3">
+        <a href="index.html" class="border border-walnut/20 text-walnut px-4 py-2 rounded-full text-sm hover:border-clay hover:text-clay transition-colors">Siteyi Görüntüle</a>
+        <button id="adminLogoutBtn" class="border border-danger/30 text-danger px-4 py-2 rounded-full text-sm hover:bg-danger/10 transition-colors">Çıkış Yap</button>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-10">
+      <!-- Form -->
+      <div class="lg:col-span-2">
+        <div class="bg-cream/60 border border-walnut/10 rounded-2xl p-6 lg:sticky lg:top-28">
+          <h2 id="formTitle" class="font-display text-xl text-walnut mb-5">Yeni Ürün Ekle</h2>
+          <form id="productForm" class="flex flex-col gap-4">
+            <input type="hidden" id="productId">
+            <div>
+              <label class="text-xs uppercase tracking-wide text-walnutlight/70">Ürün Adı</label>
+              <input type="text" id="f-title" required class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs uppercase tracking-wide text-walnutlight/70">Kategori</label>
+                <select id="f-category" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
+                  <option value="mobilya">Mobilya</option>
+                  <option value="hediyelik">Hediyelik Eşya</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs uppercase tracking-wide text-walnutlight/70">Fiyat (₺)</label>
+                <input type="number" id="f-price" min="0" step="1" required class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs uppercase tracking-wide text-walnutlight/70">Görsel / İkon</label>
+              <select id="f-icon" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
+                <option value="table">Masa</option>
+                <option value="coffee-table">Sehpa</option>
+                <option value="shelf">Raf / Kitaplık</option>
+                <option value="clock">Saat</option>
+                <option value="board">Sunum Tahtası</option>
+                <option value="box">Kutu</option>
+                <option value="default">Genel Ahşap Ürün</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs uppercase tracking-wide text-walnutlight/70">Kısa Açıklama (kartlarda görünür)</label>
+              <textarea id="f-shortdesc" rows="2" required class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1"></textarea>
+            </div>
+            <div>
+              <label class="text-xs uppercase tracking-wide text-walnutlight/70">Detaylı Açıklama (ürün sayfasında görünür)</label>
+              <textarea id="f-longdesc" rows="4" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1"></textarea>
+            </div>
+            <div>
+              <label class="text-xs uppercase tracking-wide text-walnutlight/70">Özellikler (virgülle ayırın)</label>
+              <input type="text" id="f-specs" placeholder="Ceviz ağacı, 8 kişilik, Doğal kenar" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
+            </div>
+            <div class="flex gap-3 mt-2">
+              <button type="submit" id="formSubmitBtn" class="flex-1 bg-walnut text-paper px-5 py-2.5 rounded-full font-medium hover:bg-sagedark transition-colors">Ürünü Kaydet</button>
+              <button type="button" id="formCancelBtn" class="hidden border border-walnut/20 text-walnut px-5 py-2.5 rounded-full font-medium hover:border-clay hover:text-clay transition-colors">Vazgeç</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div class="lg:col-span-3">
+        <h2 class="font-display text-xl text-walnut mb-5">Mevcut Ürünler (<span id="adminCount">0</span>)</h2>
+        <div id="adminProductList" class="flex flex-col gap-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="products.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
