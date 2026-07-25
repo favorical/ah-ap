@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ürün Detayı | Meşe Atölye</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: { cream:'#EDE4D3', paper:'#F7F1E6', walnut:'#3B2A1E', walnutlight:'#5A4230', clay:'#8B5E3C', sage:'#6B7A5E', sagedark:'#4A5641', gold:'#B8912F', ink:'#2A211B', danger:'#A3453A' },
+      fontFamily: { display:['Fraunces','serif'], body:['Work Sans','sans-serif'] }
+    } }
+  }
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="font-body text-ink antialiased">
+
+<!-- ============ HEADER (sadeleştirilmiş) ============ -->
+<header class="sticky top-0 z-50 bg-paper/90 backdrop-blur-md border-b border-walnut/10">
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between h-20">
+    <a href="index.html" class="flex items-baseline gap-2 select-none">
+      <span class="font-display font-bold text-2xl tracking-tight text-walnut">MEŞE</span>
+      <span class="font-body text-xs tracking-[0.35em] uppercase text-clay">Atölye</span>
+    </a>
+    <a href="index.html#urunler" class="text-sm font-medium text-walnut border border-walnut/20 px-5 py-2.5 rounded-full hover:border-clay hover:text-clay transition-colors">Kataloğa Dön</a>
+  </div>
+</header>
+
+<div class="max-w-5xl mx-auto px-6 lg:px-10 py-16">
+  <div id="detailBreadcrumb" class="text-sm text-walnutlight/70 mb-8 flex items-center gap-2"></div>
+  <div id="detailContent"><div class="flex justify-center py-20"><div class="spinner"></div></div></div>
+  <div id="detailRelated" class="mt-20"></div>
+</div>
+
+<!-- ============ SABİT WHATSAPP BUTONU ============ -->
+<a href="https://wa.me/905551112233?text=Merhaba%2C%20%C3%BCr%C3%BCnleriniz%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum."
+   target="_blank" rel="noopener"
+   class="whatsapp-float fixed bottom-6 right-6 z-50 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+   aria-label="WhatsApp'tan sipariş ver">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.82L2 22l5.42-1.42a9.86 9.86 0 0 0 4.62 1.15h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.86 9.86 0 0 0 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.13-4.9-4.32-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1.01-2.4.26-.29.58-.36.77-.36h.55c.18 0 .41-.03.64.49.24.55.8 1.92.87 2.06.07.14.11.31.02.5-.09.19-.14.31-.27.47-.14.17-.29.37-.41.5-.14.14-.28.29-.12.57.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.18-.28.36-.23.6-.14.24.09 1.53.72 1.79.85.26.13.43.19.5.3.06.11.06.65-.18 1.33z"/></svg>
+</a>
+
+<script src="products.js"></script>
+<script src="detay.js"></script>
+</body>
+</html>
