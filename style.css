@@ -1,1 +1,49 @@
 
+/* =========================================================
+   MEŞE ATÖLYE — Ortak Stil Dosyası
+   Tüm sayfalarda (index.html, detay.html, admin.html) kullanılır.
+   Tailwind CDN üzerinden gelmeyen özel kurallar burada.
+   ========================================================= */
+
+html { scroll-behavior: smooth; }
+body { background-color: #F7F1E6; }
+
+.grain-bg {
+  background-image:
+    repeating-linear-gradient(100deg, rgba(59,42,30,0.05) 0px, rgba(59,42,30,0.05) 1px, transparent 1px, transparent 34px),
+    repeating-linear-gradient(100deg, rgba(184,145,47,0.04) 0px, rgba(184,145,47,0.04) 1px, transparent 1px, transparent 58px);
+}
+
+.card-lift { transition: transform .35s ease, box-shadow .35s ease; }
+.card-lift:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -12px rgba(59,42,30,0.25); }
+
+.filter-btn.active { background-color: #3B2A1E; color: #F7F1E6; }
+
+.whatsapp-float { animation: floatPulse 3s ease-in-out infinite; }
+@keyframes floatPulse { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-6px);} }
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-float { animation: none; }
+  .card-lift { transition: none; }
+}
+
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+.mobile-menu { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+.mobile-menu.open { max-height: 400px; }
+
+.spinner {
+  border: 3px solid rgba(59,42,30,0.15);
+  border-top-color: #8B5E3C;
+  border-radius: 9999px;
+  width: 34px;
+  height: 34px;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139,94,60,0.25);
+}
