@@ -10,75 +10,33 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          cream: '#EDE4D3',
-          paper: '#F7F1E6',
-          walnut: '#3B2A1E',
-          walnutlight: '#5A4230',
-          clay: '#8B5E3C',
-          sage: '#6B7A5E',
-          sagedark: '#4A5641',
-          gold: '#B8912F',
-          ink: '#2A211B',
-          danger: '#A3453A'
-        },
-        fontFamily: {
-          display: ['Fraunces', 'serif'],
-          body: ['Work Sans', 'sans-serif']
-        }
-      }
-    }
+    theme: { extend: {
+      colors: { cream:'#EDE4D3', paper:'#F7F1E6', walnut:'#3B2A1E', walnutlight:'#5A4230', clay:'#8B5E3C', sage:'#6B7A5E', sagedark:'#4A5641', gold:'#B8912F', ink:'#2A211B', danger:'#A3453A' },
+      fontFamily: { display:['Fraunces','serif'], body:['Work Sans','sans-serif'] }
+    } }
   }
 </script>
-<style>
-  html { scroll-behavior: smooth; }
-  body { background-color: #F7F1E6; }
-  .grain-bg {
-    background-image:
-      repeating-linear-gradient(100deg, rgba(59,42,30,0.05) 0px, rgba(59,42,30,0.05) 1px, transparent 1px, transparent 34px),
-      repeating-linear-gradient(100deg, rgba(184,145,47,0.04) 0px, rgba(184,145,47,0.04) 1px, transparent 1px, transparent 58px);
-  }
-  .card-lift { transition: transform .35s ease, box-shadow .35s ease; }
-  .card-lift:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -12px rgba(59,42,30,0.25); }
-  .filter-btn.active { background-color: #3B2A1E; color: #F7F1E6; }
-  .whatsapp-float { animation: floatPulse 3s ease-in-out infinite; }
-  @keyframes floatPulse { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-6px);} }
-  @media (prefers-reduced-motion: reduce) {
-    .whatsapp-float { animation: none; }
-    .card-lift { transition: none; }
-  }
-  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
-  .reveal.in { opacity: 1; transform: translateY(0); }
-  .mobile-menu { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
-  .mobile-menu.open { max-height: 400px; }
-  .view { display: none; }
-  .view.active { display: block; }
-  .spinner { border: 3px solid rgba(59,42,30,0.15); border-top-color: #8B5E3C; border-radius: 9999px; width: 34px; height: 34px; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  input:focus, textarea:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(139,94,60,0.25); }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body class="font-body text-ink antialiased">
 
 <!-- ============ HEADER ============ -->
 <header class="sticky top-0 z-50 bg-paper/90 backdrop-blur-md border-b border-walnut/10">
   <div class="max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between h-20">
-    <a href="#/" class="nav-link flex items-baseline gap-2 select-none" data-target="home">
+    <a href="index.html" class="flex items-baseline gap-2 select-none">
       <span class="font-display font-bold text-2xl tracking-tight text-walnut">MEŞE</span>
       <span class="font-body text-xs tracking-[0.35em] uppercase text-clay">Atölye</span>
     </a>
 
     <nav class="hidden md:flex items-center gap-10 font-body text-sm tracking-wide text-walnutlight">
-      <a href="#hakkimizda" class="anchor-link hover:text-clay transition-colors">Hakkımızda</a>
-      <a href="#urunler" class="anchor-link hover:text-clay transition-colors">Ürünlerimiz</a>
-      <a href="#ozel-siparis" class="anchor-link hover:text-clay transition-colors">Özel Sipariş</a>
-      <a href="#iletisim" class="anchor-link hover:text-clay transition-colors">İletişim</a>
+      <a href="#hakkimizda" class="hover:text-clay transition-colors">Hakkımızda</a>
+      <a href="#urunler" class="hover:text-clay transition-colors">Ürünlerimiz</a>
+      <a href="#ozel-siparis" class="hover:text-clay transition-colors">Özel Sipariş</a>
+      <a href="#iletisim" class="hover:text-clay transition-colors">İletişim</a>
     </nav>
 
     <div class="flex items-center gap-4">
-      <a href="#urunler" class="anchor-link hidden sm:inline-block bg-walnut text-paper text-sm font-medium px-5 py-2.5 rounded-full hover:bg-sagedark transition-colors">Sipariş Ver</a>
+      <a href="#urunler" class="hidden sm:inline-block bg-walnut text-paper text-sm font-medium px-5 py-2.5 rounded-full hover:bg-sagedark transition-colors">Sipariş Ver</a>
       <button id="menuBtn" class="md:hidden text-walnut" aria-label="Menüyü aç">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -89,285 +47,162 @@
 
   <div id="mobileMenu" class="mobile-menu md:hidden bg-paper border-t border-walnut/10">
     <div class="flex flex-col px-6 py-4 gap-4 text-walnutlight font-medium">
-      <a href="#hakkimizda" class="anchor-link py-1">Hakkımızda</a>
-      <a href="#urunler" class="anchor-link py-1">Ürünlerimiz</a>
-      <a href="#ozel-siparis" class="anchor-link py-1">Özel Sipariş</a>
-      <a href="#iletisim" class="anchor-link py-1">İletişim</a>
-      <a href="#urunler" class="anchor-link bg-walnut text-paper text-center px-5 py-2.5 rounded-full mt-1">Sipariş Ver</a>
+      <a href="#hakkimizda" class="py-1">Hakkımızda</a>
+      <a href="#urunler" class="py-1">Ürünlerimiz</a>
+      <a href="#ozel-siparis" class="py-1">Özel Sipariş</a>
+      <a href="#iletisim" class="py-1">İletişim</a>
+      <a href="#urunler" class="bg-walnut text-paper text-center px-5 py-2.5 rounded-full mt-1">Sipariş Ver</a>
     </div>
   </div>
 </header>
 
-<main id="app">
+<!-- ============ HERO ============ -->
+<section class="relative grain-bg overflow-hidden">
+  <svg class="absolute -right-24 -top-24 w-[520px] h-[520px] opacity-[0.14] pointer-events-none" viewBox="0 0 400 400" fill="none">
+    <circle cx="200" cy="200" r="180" stroke="#3B2A1E" stroke-width="2"/>
+    <circle cx="200" cy="200" r="150" stroke="#3B2A1E" stroke-width="2"/>
+    <circle cx="200" cy="200" r="118" stroke="#8B5E3C" stroke-width="2"/>
+    <circle cx="200" cy="200" r="84" stroke="#3B2A1E" stroke-width="2"/>
+    <circle cx="200" cy="200" r="48" stroke="#8B5E3C" stroke-width="2"/>
+  </svg>
 
-<!-- ================================================================= -->
-<!-- ============================ HOME VIEW ========================= -->
-<!-- ================================================================= -->
-<section id="view-home" class="view active">
-
-  <!-- HERO -->
-  <section class="relative grain-bg overflow-hidden">
-    <svg class="absolute -right-24 -top-24 w-[520px] h-[520px] opacity-[0.14] pointer-events-none" viewBox="0 0 400 400" fill="none">
-      <circle cx="200" cy="200" r="180" stroke="#3B2A1E" stroke-width="2"/>
-      <circle cx="200" cy="200" r="150" stroke="#3B2A1E" stroke-width="2"/>
-      <circle cx="200" cy="200" r="118" stroke="#8B5E3C" stroke-width="2"/>
-      <circle cx="200" cy="200" r="84" stroke="#3B2A1E" stroke-width="2"/>
-      <circle cx="200" cy="200" r="48" stroke="#8B5E3C" stroke-width="2"/>
-    </svg>
-
-    <div class="max-w-7xl mx-auto px-6 lg:px-10 pt-20 pb-28 md:pt-28 md:pb-36 relative">
-      <p class="reveal font-body tracking-[0.3em] text-xs uppercase text-clay mb-5">El emeği · Masif ahşap · Amasya atölyesi</p>
-      <h1 class="reveal font-display font-semibold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] text-walnut max-w-4xl">
-        Doğal ahşabı<br class="hidden sm:block"> <span class="italic font-normal text-clay">sanatla</span> buluşturuyoruz.
-      </h1>
-      <p class="reveal mt-7 text-lg text-walnutlight max-w-xl leading-relaxed">
-        Her tomruk kendi hikâyesini taşır. Biz o hikâyeyi kesmeden, zorlamadan; masanıza, rafınıza,
-        elinizdeki hediyeye dönüştürüyoruz.
-      </p>
-      <div class="reveal mt-10 flex flex-col sm:flex-row gap-4">
-        <a href="#urunler" class="anchor-link bg-walnut text-paper px-8 py-4 rounded-full font-medium text-center hover:bg-sagedark transition-colors">Kataloğu İncele</a>
-        <a href="#ozel-siparis" class="anchor-link border border-walnut/30 text-walnut px-8 py-4 rounded-full font-medium text-center hover:border-clay hover:text-clay transition-colors">Özel Tasarım İste</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- HAKKIMIZDA -->
-  <section id="hakkimizda" class="bg-cream/60 border-y border-walnut/10 scroll-mt-24">
-    <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 grid md:grid-cols-3 gap-10">
-      <div class="reveal">
-        <h2 class="font-display text-3xl text-walnut mb-3">Atölyeden bir kelam</h2>
-        <p class="text-walnutlight leading-relaxed">
-          20 yılı aşkın süredir meşe, ceviz ve gürgen ile çalışıyoruz. Her parça, önce elde çizilir,
-          sonra atölyede şekil bulur — seri üretim değil, tek tek zanaat.
-        </p>
-      </div>
-      <div class="reveal flex flex-col gap-2">
-        <span class="font-display text-4xl text-clay">100%</span>
-        <p class="text-walnutlight text-sm">Masif ahşap, plywood veya MDF kullanılmaz.</p>
-      </div>
-      <div class="reveal flex flex-col gap-2">
-        <span class="font-display text-4xl text-clay">7 gün</span>
-        <p class="text-walnutlight text-sm">Standart ürünlerde ortalama teslim süresi.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ÜRÜNLER -->
-  <section id="urunler" class="max-w-7xl mx-auto px-6 lg:px-10 py-24 scroll-mt-24">
-    <div class="reveal flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-      <div>
-        <p class="tracking-[0.3em] text-xs uppercase text-clay mb-3">Katalog</p>
-        <h2 class="font-display text-3xl sm:text-4xl text-walnut">Ürünlerimiz</h2>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button data-filter="all" class="filter-btn active px-5 py-2.5 rounded-full text-sm font-medium border border-walnut/20 text-walnut transition-colors">Tüm Ürünler</button>
-        <button data-filter="mobilya" class="filter-btn px-5 py-2.5 rounded-full text-sm font-medium border border-walnut/20 text-walnut transition-colors">Mobilya</button>
-        <button data-filter="hediyelik" class="filter-btn px-5 py-2.5 rounded-full text-sm font-medium border border-walnut/20 text-walnut transition-colors">Hediyelik Eşya</button>
-      </div>
-    </div>
-
-    <div id="productGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[160px]">
-      <div class="col-span-full flex justify-center py-14"><div class="spinner"></div></div>
-    </div>
-  </section>
-
-  <!-- ÖZEL SİPARİŞ / SÜREÇ -->
-  <section id="ozel-siparis" class="bg-walnut text-paper scroll-mt-24">
-    <div class="max-w-7xl mx-auto px-6 lg:px-10 py-24">
-      <div class="reveal max-w-2xl mb-16">
-        <p class="tracking-[0.3em] text-xs uppercase text-gold mb-3">Özel Sipariş</p>
-        <h2 class="font-display text-3xl sm:text-4xl mb-4">Ölçünüz, ahşabınız, tasarımınız.</h2>
-        <p class="text-cream/80 leading-relaxed">
-          Evinize veya ofisinize tam oturan; sizin seçtiğiniz ahşap, boyut ve tasarıma göre üretilen
-          tek parça mobilyalar için üç basit adım.
-        </p>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-10 relative">
-        <div class="hidden md:block absolute top-8 left-[16.6%] right-[16.6%] h-px bg-cream/20"></div>
-
-        <div class="reveal relative">
-          <div class="w-16 h-16 rounded-full bg-sage/20 border border-sage/40 flex items-center justify-center font-display text-xl text-gold mb-6">01</div>
-          <h3 class="font-display text-xl mb-2">Tasarla & Ölçü Al</h3>
-          <p class="text-cream/70 text-sm leading-relaxed">Sizinle görüşür, mekânınızı ve isteğinizi dinleriz. Ahşap türünü ve ölçüleri birlikte belirleriz.</p>
-        </div>
-        <div class="reveal relative">
-          <div class="w-16 h-16 rounded-full bg-sage/20 border border-sage/40 flex items-center justify-center font-display text-xl text-gold mb-6">02</div>
-          <h3 class="font-display text-xl mb-2">Atölye Üretimi</h3>
-          <p class="text-cream/70 text-sm leading-relaxed">Parça, ustalarımızın elinde şekillenir; kesim, montaj ve cila süreçlerini adım adım paylaşırız.</p>
-        </div>
-        <div class="reveal relative">
-          <div class="w-16 h-16 rounded-full bg-sage/20 border border-sage/40 flex items-center justify-center font-display text-xl text-gold mb-6">03</div>
-          <h3 class="font-display text-xl mb-2">Kapıda Teslim</h3>
-          <p class="text-cream/70 text-sm leading-relaxed">Özenle paketlenip, güvenli nakliye ile adresinize ulaştırılır ve yerine kurulur.</p>
-        </div>
-      </div>
-
-      <a href="https://wa.me/905551112233?text=Merhaba%2C%20%C3%B6zel%20tasar%C4%B1m%20ah%C5%9Fap%20%C3%BCr%C3%BCn%20i%C3%A7in%20bilgi%20almak%20istiyorum."
-         target="_blank" rel="noopener"
-         class="reveal inline-block mt-14 bg-sage text-walnut px-8 py-4 rounded-full font-medium hover:bg-cream transition-colors">
-        Özel Tasarım Talebi Gönder
-      </a>
-    </div>
-  </section>
-
-  <!-- İLETİŞİM / FOOTER -->
-  <footer id="iletisim" class="bg-ink text-cream/80 scroll-mt-24">
-    <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 grid md:grid-cols-3 gap-12">
-      <div>
-        <span class="font-display font-bold text-2xl text-paper">MEŞE</span>
-        <span class="text-xs tracking-[0.35em] uppercase text-clay ml-2">Atölye</span>
-        <p class="mt-5 text-sm leading-relaxed text-cream/60 max-w-xs">
-          Amasya'da, ahşabı doğal formuyla mobilyaya ve hediyelik eşyaya dönüştüren küçük bir atölyeyiz.
-        </p>
-      </div>
-
-      <div>
-        <h4 class="font-display text-lg text-paper mb-4">Atölye</h4>
-        <p class="text-sm text-cream/60 leading-relaxed">
-          Kaleboyu Mahallesi, Marangozlar Sokak No:14<br>
-          Merzifon / Amasya
-        </p>
-        <p class="text-sm text-cream/60 mt-3">Tel: +90 555 111 22 33</p>
-        <p class="text-sm text-cream/60">E-posta: atolye@meseatolye.com</p>
-      </div>
-
-      <div>
-        <h4 class="font-display text-lg text-paper mb-4">Bizi Takip Edin</h4>
-        <div class="flex gap-4">
-          <a href="#" aria-label="Instagram" class="w-10 h-10 rounded-full border border-cream/20 flex items-center justify-center hover:border-clay hover:text-clay transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
-          </a>
-          <a href="#" aria-label="Facebook" class="w-10 h-10 rounded-full border border-cream/20 flex items-center justify-center hover:border-clay hover:text-clay transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path d="M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H9v3h2v6h3v-6h2.5l.5-3H14V9z"/></svg>
-          </a>
-          <a href="https://wa.me/905551112233" target="_blank" rel="noopener" aria-label="WhatsApp" class="w-10 h-10 rounded-full border border-cream/20 flex items-center justify-center hover:border-clay hover:text-clay transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.82L2 22l5.42-1.42a9.86 9.86 0 0 0 4.62 1.15h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.86 9.86 0 0 0 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.13-4.9-4.32-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1.01-2.4.26-.29.58-.36.77-.36h.55c.18 0 .41-.03.64.49.24.55.8 1.92.87 2.06.07.14.11.31.02.5-.09.19-.14.31-.27.47-.14.17-.29.37-.41.5-.14.14-.28.29-.12.57.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.18-.28.36-.23.6-.14.24.09 1.53.72 1.79.85.26.13.43.19.5.3.06.11.06.65-.18 1.33z"/></svg>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="border-t border-cream/10 py-6 text-center text-xs text-cream/40 flex flex-col sm:flex-row items-center justify-center gap-2">
-      <span>© 2026 Meşe Atölye. Tüm hakları saklıdır.</span>
-      <span class="hidden sm:inline">·</span>
-      <a href="#/admin" class="admin-link hover:text-clay transition-colors underline underline-offset-2">Yönetici Girişi</a>
-    </div>
-  </footer>
-
-</section>
-
-<!-- ================================================================= -->
-<!-- ========================== DETAIL VIEW ========================== -->
-<!-- ================================================================= -->
-<section id="view-detail" class="view">
-  <div class="max-w-5xl mx-auto px-6 lg:px-10 py-16">
-    <div id="detailBreadcrumb" class="text-sm text-walnutlight/70 mb-8 flex items-center gap-2"></div>
-    <div id="detailContent"><div class="flex justify-center py-20"><div class="spinner"></div></div></div>
-    <div id="detailRelated" class="mt-20"></div>
-  </div>
-</section>
-
-<!-- ================================================================= -->
-<!-- =========================== ADMIN VIEW =========================== -->
-<!-- ================================================================= -->
-<section id="view-admin" class="view">
-  <div class="max-w-6xl mx-auto px-6 lg:px-10 py-16">
-
-    <!-- Login -->
-    <div id="adminLogin" class="max-w-sm mx-auto bg-cream/60 border border-walnut/10 rounded-2xl p-8 mt-10">
-      <h2 class="font-display text-2xl text-walnut mb-2">Yönetici Girişi</h2>
-      <p class="text-sm text-walnutlight mb-6">Ürünleri eklemek, düzenlemek veya kaldırmak için giriş yapın.</p>
-      <form id="adminLoginForm" class="flex flex-col gap-3">
-        <input type="password" id="adminPasscode" placeholder="Şifre" class="w-full border border-walnut/20 rounded-lg px-4 py-2.5 bg-paper" required>
-        <p id="adminLoginError" class="text-danger text-sm hidden">Şifre hatalı, tekrar deneyin.</p>
-        <button type="submit" class="bg-walnut text-paper px-5 py-2.5 rounded-full font-medium hover:bg-sagedark transition-colors">Giriş Yap</button>
-      </form>
-      <p class="text-xs text-walnutlight/60 mt-5 leading-relaxed">
-        Not: Bu, tarayıcı taraflı basit bir erişim koruması içindir. Demo şifre: <span class="font-mono">atolye2026</span>
-      </p>
-    </div>
-
-    <!-- Panel -->
-    <div id="adminPanel" class="hidden">
-      <div class="flex items-center justify-between mb-10 flex-wrap gap-4">
-        <div>
-          <p class="tracking-[0.3em] text-xs uppercase text-clay mb-2">Yönetici Paneli</p>
-          <h2 class="font-display text-3xl text-walnut">Ürün Yönetimi</h2>
-        </div>
-        <div class="flex gap-3">
-          <a href="#/" class="anchor-link border border-walnut/20 text-walnut px-4 py-2 rounded-full text-sm hover:border-clay hover:text-clay transition-colors">Siteyi Görüntüle</a>
-          <button id="adminLogoutBtn" class="border border-danger/30 text-danger px-4 py-2 rounded-full text-sm hover:bg-danger/10 transition-colors">Çıkış Yap</button>
-        </div>
-      </div>
-
-      <div class="grid lg:grid-cols-5 gap-10">
-        <!-- Form -->
-        <div class="lg:col-span-2">
-          <div class="bg-cream/60 border border-walnut/10 rounded-2xl p-6 sticky top-28">
-            <h3 id="formTitle" class="font-display text-xl text-walnut mb-5">Yeni Ürün Ekle</h3>
-            <form id="productForm" class="flex flex-col gap-4">
-              <input type="hidden" id="productId">
-              <div>
-                <label class="text-xs uppercase tracking-wide text-walnutlight/70">Ürün Adı</label>
-                <input type="text" id="f-title" required class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="text-xs uppercase tracking-wide text-walnutlight/70">Kategori</label>
-                  <select id="f-category" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
-                    <option value="mobilya">Mobilya</option>
-                    <option value="hediyelik">Hediyelik Eşya</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="text-xs uppercase tracking-wide text-walnutlight/70">Fiyat (₺)</label>
-                  <input type="number" id="f-price" min="0" step="1" required class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
-                </div>
-              </div>
-              <div>
-                <label class="text-xs uppercase tracking-wide text-walnutlight/70">Görsel / İkon</label>
-                <select id="f-icon" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
-                  <option value="table">Masa</option>
-                  <option value="coffee-table">Sehpa</option>
-                  <option value="shelf">Raf / Kitaplık</option>
-                  <option value="clock">Saat</option>
-                  <option value="board">Sunum Tahtası</option>
-                  <option value="box">Kutu</option>
-                  <option value="default">Genel Ahşap Ürün</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-xs uppercase tracking-wide text-walnutlight/70">Kısa Açıklama (kartlarda görünür)</label>
-                <textarea id="f-shortdesc" rows="2" required class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1"></textarea>
-              </div>
-              <div>
-                <label class="text-xs uppercase tracking-wide text-walnutlight/70">Detaylı Açıklama (ürün sayfasında görünür)</label>
-                <textarea id="f-longdesc" rows="4" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1"></textarea>
-              </div>
-              <div>
-                <label class="text-xs uppercase tracking-wide text-walnutlight/70">Özellikler (virgülle ayırın)</label>
-                <input type="text" id="f-specs" placeholder="Ceviz ağacı, 8 kişilik, Doğal kenar" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1">
-              </div>
-              <div class="flex gap-3 mt-2">
-                <button type="submit" id="formSubmitBtn" class="flex-1 bg-walnut text-paper px-5 py-2.5 rounded-full font-medium hover:bg-sagedark transition-colors">Ürünü Kaydet</button>
-                <button type="button" id="formCancelBtn" class="hidden border border-walnut/20 text-walnut px-5 py-2.5 rounded-full font-medium hover:border-clay hover:text-clay transition-colors">Vazgeç</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- List -->
-        <div class="lg:col-span-3">
-          <h3 class="font-display text-xl text-walnut mb-5">Mevcut Ürünler (<span id="adminCount">0</span>)</h3>
-          <div id="adminProductList" class="flex flex-col gap-3"></div>
-        </div>
-      </div>
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 pt-20 pb-28 md:pt-28 md:pb-36 relative">
+    <p class="reveal font-body tracking-[0.3em] text-xs uppercase text-clay mb-5">El emeği · Masif ahşap · Amasya atölyesi</p>
+    <h1 class="reveal font-display font-semibold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] text-walnut max-w-4xl">
+      Doğal ahşabı<br class="hidden sm:block"> <span class="italic font-normal text-clay">sanatla</span> buluşturuyoruz.
+    </h1>
+    <p class="reveal mt-7 text-lg text-walnutlight max-w-xl leading-relaxed">
+      Her tomruk kendi hikâyesini taşır. Biz o hikâyeyi kesmeden, zorlamadan; masanıza, rafınıza,
+      elinizdeki hediyeye dönüştürüyoruz.
+    </p>
+    <div class="reveal mt-10 flex flex-col sm:flex-row gap-4">
+      <a href="#urunler" class="bg-walnut text-paper px-8 py-4 rounded-full font-medium text-center hover:bg-sagedark transition-colors">Kataloğu İncele</a>
+      <a href="#ozel-siparis" class="border border-walnut/30 text-walnut px-8 py-4 rounded-full font-medium text-center hover:border-clay hover:text-clay transition-colors">Özel Tasarım İste</a>
     </div>
   </div>
 </section>
 
-</main>
+<!-- ============ HAKKIMIZDA ============ -->
+<section id="hakkimizda" class="bg-cream/60 border-y border-walnut/10 scroll-mt-24">
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 grid md:grid-cols-3 gap-10">
+    <div class="reveal">
+      <h2 class="font-display text-3xl text-walnut mb-3">Atölyeden bir kelam</h2>
+      <p class="text-walnutlight leading-relaxed">
+        20 yılı aşkın süredir meşe, ceviz ve gürgen ile çalışıyoruz. Her parça, önce elde çizilir,
+        sonra atölyede şekil bulur — seri üretim değil, tek tek zanaat.
+      </p>
+    </div>
+    <div class="reveal flex flex-col gap-2">
+      <span class="font-display text-4xl text-clay">100%</span>
+      <p class="text-walnutlight text-sm">Masif ahşap, plywood veya MDF kullanılmaz.</p>
+    </div>
+    <div class="reveal flex flex-col gap-2">
+      <span class="font-display text-4xl text-clay">7 gün</span>
+      <p class="text-walnutlight text-sm">Standart ürünlerde ortalama teslim süresi.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ÜRÜNLER ============ -->
+<section id="urunler" class="max-w-7xl mx-auto px-6 lg:px-10 py-24 scroll-mt-24">
+  <div class="reveal flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+    <div>
+      <p class="tracking-[0.3em] text-xs uppercase text-clay mb-3">Katalog</p>
+      <h2 class="font-display text-3xl sm:text-4xl text-walnut">Ürünlerimiz</h2>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button data-filter="all" class="filter-btn active px-5 py-2.5 rounded-full text-sm font-medium border border-walnut/20 text-walnut transition-colors">Tüm Ürünler</button>
+      <button data-filter="mobilya" class="filter-btn px-5 py-2.5 rounded-full text-sm font-medium border border-walnut/20 text-walnut transition-colors">Mobilya</button>
+      <button data-filter="hediyelik" class="filter-btn px-5 py-2.5 rounded-full text-sm font-medium border border-walnut/20 text-walnut transition-colors">Hediyelik Eşya</button>
+    </div>
+  </div>
+
+  <div id="productGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[160px]"></div>
+</section>
+
+<!-- ============ ÖZEL SİPARİŞ / SÜREÇ ============ -->
+<section id="ozel-siparis" class="bg-walnut text-paper scroll-mt-24">
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 py-24">
+    <div class="reveal max-w-2xl mb-16">
+      <p class="tracking-[0.3em] text-xs uppercase text-gold mb-3">Özel Sipariş</p>
+      <h2 class="font-display text-3xl sm:text-4xl mb-4">Ölçünüz, ahşabınız, tasarımınız.</h2>
+      <p class="text-cream/80 leading-relaxed">
+        Evinize veya ofisinize tam oturan; sizin seçtiğiniz ahşap, boyut ve tasarıma göre üretilen
+        tek parça mobilyalar için üç basit adım.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-10 relative">
+      <div class="hidden md:block absolute top-8 left-[16.6%] right-[16.6%] h-px bg-cream/20"></div>
+
+      <div class="reveal relative">
+        <div class="w-16 h-16 rounded-full bg-sage/20 border border-sage/40 flex items-center justify-center font-display text-xl text-gold mb-6">01</div>
+        <h3 class="font-display text-xl mb-2">Tasarla & Ölçü Al</h3>
+        <p class="text-cream/70 text-sm leading-relaxed">Sizinle görüşür, mekânınızı ve isteğinizi dinleriz. Ahşap türünü ve ölçüleri birlikte belirleriz.</p>
+      </div>
+      <div class="reveal relative">
+        <div class="w-16 h-16 rounded-full bg-sage/20 border border-sage/40 flex items-center justify-center font-display text-xl text-gold mb-6">02</div>
+        <h3 class="font-display text-xl mb-2">Atölye Üretimi</h3>
+        <p class="text-cream/70 text-sm leading-relaxed">Parça, ustalarımızın elinde şekillenir; kesim, montaj ve cila süreçlerini adım adım paylaşırız.</p>
+      </div>
+      <div class="reveal relative">
+        <div class="w-16 h-16 rounded-full bg-sage/20 border border-sage/40 flex items-center justify-center font-display text-xl text-gold mb-6">03</div>
+        <h3 class="font-display text-xl mb-2">Kapıda Teslim</h3>
+        <p class="text-cream/70 text-sm leading-relaxed">Özenle paketlenip, güvenli nakliye ile adresinize ulaştırılır ve yerine kurulur.</p>
+      </div>
+    </div>
+
+    <a href="https://wa.me/905551112233?text=Merhaba%2C%20%C3%B6zel%20tasar%C4%B1m%20ah%C5%9Fap%20%C3%BCr%C3%BCn%20i%C3%A7in%20bilgi%20almak%20istiyorum."
+       target="_blank" rel="noopener"
+       class="reveal inline-block mt-14 bg-sage text-walnut px-8 py-4 rounded-full font-medium hover:bg-cream transition-colors">
+      Özel Tasarım Talebi Gönder
+    </a>
+  </div>
+</section>
+
+<!-- ============ İLETİŞİM / FOOTER ============ -->
+<footer id="iletisim" class="bg-ink text-cream/80 scroll-mt-24">
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 grid md:grid-cols-3 gap-12">
+    <div>
+      <span class="font-display font-bold text-2xl text-paper">MEŞE</span>
+      <span class="text-xs tracking-[0.35em] uppercase text-clay ml-2">Atölye</span>
+      <p class="mt-5 text-sm leading-relaxed text-cream/60 max-w-xs">
+        Amasya'da, ahşabı doğal formuyla mobilyaya ve hediyelik eşyaya dönüştüren küçük bir atölyeyiz.
+      </p>
+    </div>
+
+    <div>
+      <h4 class="font-display text-lg text-paper mb-4">Atölye</h4>
+      <p class="text-sm text-cream/60 leading-relaxed">
+        Kaleboyu Mahallesi, Marangozlar Sokak No:14<br>
+        Merzifon / Amasya
+      </p>
+      <p class="text-sm text-cream/60 mt-3">Tel: +90 555 111 22 33</p>
+      <p class="text-sm text-cream/60">E-posta: atolye@meseatolye.com</p>
+    </div>
+
+    <div>
+      <h4 class="font-display text-lg text-paper mb-4">Bizi Takip Edin</h4>
+      <div class="flex gap-4">
+        <a href="#" aria-label="Instagram" class="w-10 h-10 rounded-full border border-cream/20 flex items-center justify-center hover:border-clay hover:text-clay transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a href="#" aria-label="Facebook" class="w-10 h-10 rounded-full border border-cream/20 flex items-center justify-center hover:border-clay hover:text-clay transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path d="M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H9v3h2v6h3v-6h2.5l.5-3H14V9z"/></svg>
+        </a>
+        <a href="https://wa.me/905551112233" target="_blank" rel="noopener" aria-label="WhatsApp" class="w-10 h-10 rounded-full border border-cream/20 flex items-center justify-center hover:border-clay hover:text-clay transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.82L2 22l5.42-1.42a9.86 9.86 0 0 0 4.62 1.15h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.86 9.86 0 0 0 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.13-4.9-4.32-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1.01-2.4.26-.29.58-.36.77-.36h.55c.18 0 .41-.03.64.49.24.55.8 1.92.87 2.06.07.14.11.31.02.5-.09.19-.14.31-.27.47-.14.17-.29.37-.41.5-.14.14-.28.29-.12.57.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.18-.28.36-.23.6-.14.24.09 1.53.72 1.79.85.26.13.43.19.5.3.06.11.06.65-.18 1.33z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="border-t border-cream/10 py-6 text-center text-xs text-cream/40 flex flex-col sm:flex-row items-center justify-center gap-2">
+    <span>© 2026 Meşe Atölye. Tüm hakları saklıdır.</span>
+    <span class="hidden sm:inline">·</span>
+    <a href="admin.html" class="hover:text-clay transition-colors underline underline-offset-2">Yönetici Girişi</a>
+  </div>
+</footer>
 
 <!-- ============ SABİT WHATSAPP BUTONU ============ -->
 <a href="https://wa.me/905551112233?text=Merhaba%2C%20%C3%BCr%C3%BCnleriniz%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum."
@@ -377,448 +212,7 @@
   <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.82L2 22l5.42-1.42a9.86 9.86 0 0 0 4.62 1.15h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.86 9.86 0 0 0 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.13-4.9-4.32-.14-.19-1.17-1.56-1.17-2.97 0-1.42.74-2.11 1.01-2.4.26-.29.58-.36.77-.36h.55c.18 0 .41-.03.64.49.24.55.8 1.92.87 2.06.07.14.11.31.02.5-.09.19-.14.31-.27.47-.14.17-.29.37-.41.5-.14.14-.28.29-.12.57.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.18-.28.36-.23.6-.14.24.09 1.53.72 1.79.85.26.13.43.19.5.3.06.11.06.65-.18 1.33z"/></svg>
 </a>
 
-<script>
-/* =========================================================
-   VERİ KATMANI — window.storage üzerinden kalıcı ürün verisi
-   ========================================================= */
-const STORAGE_KEY = 'mese-atolye-products';
-const ADMIN_PASSCODE = 'atolye2026';
-const WHATSAPP_NUMBER = '905551112233';
-
-const defaultProducts = [
-  { id: 'p1', title: 'Masif Ahşap Yemek Masası', category: 'mobilya', price: 18500, icon: 'table',
-    shortDesc: 'Ceviz ağacından, 8 kişilik, doğal kenar dokusu korunmuş tek parça masa.',
-    longDesc: 'Bu yemek masası, tek bir ceviz kütüğünden, ağacın doğal kenar hattı korunarak üretilmiştir. Yüzey, çok katmanlı doğal yağ ile cilalanarak hem dokunuşta sıcak hem de leke ve neme dayanıklı hale getirilmiştir. Her masa kendine has damar deseniyle biriciktir.',
-    specs: ['Ceviz ağacı','8 kişilik','220 x 95 cm','Doğal yağ cila','Kenar hattı korunmuş'] },
-  { id: 'p2', title: 'Epoksi Ahşap Sehpa', category: 'mobilya', price: 7200, icon: 'coffee-table',
-    shortDesc: 'Meşe gövde ve lacivert epoksi reçine dolgulu, oturma odaları için orta sehpa.',
-    longDesc: 'Meşe ahşabın doğal çatlakları, UV dayanımlı epoksi reçine ile doldurularak nehir görünümü elde edilmiştir. Metal ayaklar siyah elektrostatik boya ile kaplanmıştır.',
-    specs: ['Meşe ahşap','Epoksi reçine dolgu','Metal ayak','110 x 55 cm'] },
-  { id: 'p3', title: 'Ahşap Kitaplık', category: 'mobilya', price: 9800, icon: 'shelf',
-    shortDesc: 'Gürgen ahşaptan, duvara monteli, 5 raflı minimalist kitaplık.',
-    longDesc: 'Duvara sabitlenen bu kitaplık, gürgen ahşabın doğal sarı tonunu korur. Görünür vida veya bağlantı parçası bulunmaz; gizli montaj sistemi kullanılmıştır.',
-    specs: ['Gürgen ahşap','5 raf','Gizli montaj','160 x 180 cm'] },
-  { id: 'p4', title: 'Kişiselleştirilmiş Ahşap Saat', category: 'hediyelik', price: 650, icon: 'clock',
-    shortDesc: 'İsim veya tarih işlemeli, ceviz kaplama duvar saati.',
-    longDesc: 'İstediğiniz ismi, tarihi veya kısa bir mesajı lazer işleme ile saatin üzerine işliyoruz. Sessiz mekanizma sayesinde tik-tak sesi neredeyse duyulmaz.',
-    specs: ['Ceviz kaplama','Lazer kişiselleştirme','Sessiz mekanizma','Çap 30 cm'] },
-  { id: 'p5', title: 'Ahşap Sunum Tahtası', category: 'hediyelik', price: 450, icon: 'board',
-    shortDesc: 'Zeytin ağacından, kulplu, kahvaltılık ve peynir sunumları için.',
-    longDesc: 'Zeytin ağacının kendine özgü desenleri, her tahtayı farklı kılar. Gıdayla temasa uygun doğal yağ ile kaplanmıştır, kulpu sayesinde kolayca taşınır.',
-    specs: ['Zeytin ağacı','Gıda dostu yağ kaplama','Taşıma kulpu','40 x 24 cm'] },
-  { id: 'p6', title: 'El Yapımı Ahşap Kutu', category: 'hediyelik', price: 380, icon: 'box',
-    shortDesc: 'Menteşeli, kadife astarlı, takı veya anı saklama kutusu.',
-    longDesc: 'İç kısmı yumuşak kadife ile astarlanmış bu kutu, takı, saat veya anlam taşıyan küçük eşyaları saklamak için üretilmiştir. İsteğe bağlı kapak üzeri gravür yapılabilir.',
-    specs: ['Ceviz/meşe seçenekli','Kadife astar','Pirinç menteşe','18 x 13 x 8 cm'] }
-];
-
-const icons = {
-  table: '<path d="M4 8h16M6 8v10M18 8v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-  'coffee-table': '<rect x="5" y="9" width="14" height="4" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M7 13v5M17 13v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-  shelf: '<path d="M5 6h14M5 12h14M5 18h14M8 6v12M16 6v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-  clock: '<circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-  board: '<rect x="4" y="8" width="16" height="9" rx="4" stroke="currentColor" stroke-width="1.5"/><path d="M17 8V6a1 1 0 0 1 1-1h1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-  box: '<path d="M4 8l8-4 8 4-8 4-8-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 8v8l8 4 8-4V8" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 12v8" stroke="currentColor" stroke-width="1.5"/>',
-  default: '<path d="M12 3l7 4v10l-7 4-7-4V7l7-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 12v9M5 7l7 5 7-5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'
-};
-
-function iconSvg(key, sizeClass) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" class="${sizeClass} text-clay/70" viewBox="0 0 24 24" fill="none">${icons[key] || icons.default}</svg>`;
-}
-
-function formatPrice(n) {
-  return Number(n).toLocaleString('tr-TR') + ' ₺';
-}
-
-function slugify(text) {
-  const map = { 'ç':'c','Ç':'c','ğ':'g','Ğ':'g','ı':'i','İ':'i','ö':'o','Ö':'o','ş':'s','Ş':'s','ü':'u','Ü':'u' };
-  return text.replace(/[çÇğĞıİöÖşŞüÜ]/g, m => map[m]).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-}
-
-async function loadProducts() {
-  try {
-    const res = await window.storage.get(STORAGE_KEY, true);
-    if (res && res.value) {
-      state.products = JSON.parse(res.value);
-      return;
-    }
-  } catch (e) {
-    console.warn('Ürünler depodan okunamadı, varsayılanlar kullanılıyor.', e);
-  }
-  state.products = defaultProducts;
-  await saveProducts();
-}
-
-async function saveProducts() {
-  try {
-    const result = await window.storage.set(STORAGE_KEY, JSON.stringify(state.products), true);
-    if (!result) console.error('Ürünler kaydedilemedi.');
-    return !!result;
-  } catch (e) {
-    console.error('Depolama hatası:', e);
-    alert('Ürünler kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
-    return false;
-  }
-}
-
-/* =========================================================
-   UYGULAMA DURUMU
-   ========================================================= */
-const state = {
-  products: [],
-  currentFilter: 'all',
-  isAdmin: false,
-  editingId: null
-};
-
-/* =========================================================
-   YÖNLENDİRME (ROUTER)
-   ========================================================= */
-const views = {
-  home: document.getElementById('view-home'),
-  detail: document.getElementById('view-detail'),
-  admin: document.getElementById('view-admin')
-};
-
-function setActiveView(name) {
-  Object.values(views).forEach(v => v.classList.remove('active'));
-  views[name].classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-}
-
-async function router() {
-  const hash = window.location.hash;
-
-  if (hash.startsWith('#/urun-')) {
-    const id = hash.replace('#/urun-', '');
-    setActiveView('detail');
-    renderDetail(id);
-    return;
-  }
-
-  if (hash === '#/admin') {
-    setActiveView('admin');
-    renderAdmin();
-    return;
-  }
-
-  // Ana sayfa (veya sayfa içi çapa linkleri)
-  setActiveView('home');
-  await loadProducts();
-  renderProductGrid();
-
-  const anchorIds = ['hakkimizda', 'urunler', 'ozel-siparis', 'iletisim'];
-  const targetId = hash.replace('#', '');
-  if (anchorIds.includes(targetId)) {
-    requestAnimationFrame(() => {
-      const el = document.getElementById(targetId);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    });
-  }
-}
-
-window.addEventListener('hashchange', router);
-
-/* =========================================================
-   MOBİL MENÜ
-   ========================================================= */
-const menuBtn = document.getElementById('menuBtn');
-const mobileMenu = document.getElementById('mobileMenu');
-menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('open'));
-document.querySelectorAll('.anchor-link, .admin-link').forEach(a =>
-  a.addEventListener('click', () => mobileMenu.classList.remove('open'))
-);
-
-/* =========================================================
-   ÜRÜN IZGARASI (ANA SAYFA)
-   ========================================================= */
-const grid = document.getElementById('productGrid');
-
-function renderProductGrid() {
-  const filter = state.currentFilter;
-  const items = state.products.filter(p => filter === 'all' || p.category === filter);
-  grid.innerHTML = '';
-
-  if (items.length === 0) {
-    grid.innerHTML = '<p class="col-span-full text-center text-walnutlight py-10">Bu kategoride henüz ürün yok.</p>';
-    return;
-  }
-
-  items.forEach(p => {
-    const waMsg = encodeURIComponent(`Merhaba, "${p.title}" ürünü hakkında bilgi almak istiyorum.`);
-    const card = document.createElement('article');
-    card.className = 'card-lift bg-paper border border-walnut/10 rounded-2xl overflow-hidden flex flex-col';
-    card.innerHTML = `
-      <div class="h-48 grain-bg bg-cream flex items-center justify-center border-b border-walnut/10">
-        ${iconSvg(p.icon, 'w-16 h-16')}
-      </div>
-      <div class="p-6 flex flex-col flex-1">
-        <span class="text-xs uppercase tracking-widest text-sage font-medium mb-2">${p.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'}</span>
-        <h3 class="font-display text-xl text-walnut mb-2">${p.title}</h3>
-        <p class="text-sm text-walnutlight leading-relaxed flex-1">${p.shortDesc}</p>
-        <div class="flex items-center justify-between mt-5 mb-4">
-          <span class="font-display text-lg text-clay">${formatPrice(p.price)}</span>
-        </div>
-        <div class="flex flex-col gap-2">
-          <a href="#/urun-${p.id}" class="detail-link border border-walnut/25 text-walnut text-sm font-medium text-center py-2.5 rounded-full hover:border-clay hover:text-clay transition-colors">Detaylı İncele</a>
-          <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-sm font-medium text-center py-2.5 rounded-full hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
-        </div>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-}
-
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.currentFilter = btn.dataset.filter;
-    renderProductGrid();
-  });
-});
-
-/* =========================================================
-   ÜRÜN DETAY SAYFASI
-   ========================================================= */
-function renderDetail(id) {
-  const product = state.products.find(p => p.id === id);
-  const breadcrumb = document.getElementById('detailBreadcrumb');
-  const content = document.getElementById('detailContent');
-  const related = document.getElementById('detailRelated');
-
-  if (!product) {
-    breadcrumb.innerHTML = '';
-    content.innerHTML = `
-      <div class="text-center py-20">
-        <h2 class="font-display text-2xl text-walnut mb-3">Ürün bulunamadı</h2>
-        <p class="text-walnutlight mb-6">Aradığınız ürün kaldırılmış olabilir.</p>
-        <a href="#/" class="anchor-link bg-walnut text-paper px-6 py-3 rounded-full font-medium">Kataloğa Dön</a>
-      </div>`;
-    related.innerHTML = '';
-    return;
-  }
-
-  breadcrumb.innerHTML = `
-    <a href="#/" class="anchor-link hover:text-clay">Ana Sayfa</a>
-    <span>/</span>
-    <a href="#urunler" class="anchor-link hover:text-clay">Ürünlerimiz</a>
-    <span>/</span>
-    <span class="text-walnut">${product.title}</span>
-  `;
-
-  const waMsg = encodeURIComponent(`Merhaba, "${product.title}" ürününü sipariş etmek istiyorum.`);
-  const specsHtml = (product.specs || []).map(s => `
-    <li class="flex items-start gap-2 text-sm text-walnutlight">
-      <svg class="w-4 h-4 mt-0.5 text-sage shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-      ${s}
-    </li>`).join('');
-
-  content.innerHTML = `
-    <div class="grid md:grid-cols-2 gap-12 items-start">
-      <div class="grain-bg bg-cream rounded-2xl border border-walnut/10 h-80 md:h-[420px] flex items-center justify-center">
-        ${iconSvg(product.icon, 'w-32 h-32')}
-      </div>
-      <div>
-        <span class="text-xs uppercase tracking-widest text-sage font-medium">${product.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'}</span>
-        <h1 class="font-display text-3xl sm:text-4xl text-walnut mt-2 mb-4">${product.title}</h1>
-        <p class="font-display text-2xl text-clay mb-6">${formatPrice(product.price)}</p>
-        <p class="text-walnutlight leading-relaxed mb-6">${product.shortDesc}</p>
-        ${product.longDesc ? `<p class="text-walnutlight leading-relaxed mb-6">${product.longDesc}</p>` : ''}
-        ${specsHtml ? `<ul class="flex flex-col gap-2 mb-8">${specsHtml}</ul>` : ''}
-        <div class="flex flex-col sm:flex-row gap-3">
-          <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-center px-6 py-3.5 rounded-full font-medium hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
-          <a href="#urunler" class="anchor-link border border-walnut/25 text-walnut text-center px-6 py-3.5 rounded-full font-medium hover:border-clay hover:text-clay transition-colors">Diğer Ürünlere Dön</a>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const relatedItems = state.products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
-  if (relatedItems.length > 0) {
-    related.innerHTML = `
-      <h2 class="font-display text-2xl text-walnut mb-6">Benzer Ürünler</h2>
-      <div class="grid sm:grid-cols-3 gap-6">
-        ${relatedItems.map(p => `
-          <a href="#/urun-${p.id}" class="detail-link card-lift block bg-paper border border-walnut/10 rounded-2xl overflow-hidden">
-            <div class="h-32 grain-bg bg-cream flex items-center justify-center border-b border-walnut/10">
-              ${iconSvg(p.icon, 'w-10 h-10')}
-            </div>
-            <div class="p-4">
-              <h3 class="font-display text-base text-walnut mb-1">${p.title}</h3>
-              <span class="text-clay text-sm">${formatPrice(p.price)}</span>
-            </div>
-          </a>
-        `).join('')}
-      </div>
-    `;
-  } else {
-    related.innerHTML = '';
-  }
-}
-
-/* =========================================================
-   ADMIN PANELİ
-   ========================================================= */
-const adminLoginForm = document.getElementById('adminLoginForm');
-const adminLoginBox = document.getElementById('adminLogin');
-const adminPanel = document.getElementById('adminPanel');
-const adminLoginError = document.getElementById('adminLoginError');
-
-function renderAdmin() {
-  if (state.isAdmin) {
-    adminLoginBox.classList.add('hidden');
-    adminPanel.classList.remove('hidden');
-    resetForm();
-    renderAdminList();
-  } else {
-    adminLoginBox.classList.remove('hidden');
-    adminPanel.classList.add('hidden');
-  }
-}
-
-adminLoginForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const val = document.getElementById('adminPasscode').value;
-  if (val === ADMIN_PASSCODE) {
-    state.isAdmin = true;
-    adminLoginError.classList.add('hidden');
-    document.getElementById('adminPasscode').value = '';
-    renderAdmin();
-  } else {
-    adminLoginError.classList.remove('hidden');
-  }
-});
-
-document.getElementById('adminLogoutBtn').addEventListener('click', () => {
-  state.isAdmin = false;
-  renderAdmin();
-});
-
-function renderAdminList() {
-  const list = document.getElementById('adminProductList');
-  document.getElementById('adminCount').textContent = state.products.length;
-  list.innerHTML = '';
-
-  if (state.products.length === 0) {
-    list.innerHTML = '<p class="text-walnutlight text-sm">Henüz ürün eklenmemiş.</p>';
-    return;
-  }
-
-  state.products.forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'flex items-center gap-4 bg-paper border border-walnut/10 rounded-xl p-3';
-    row.innerHTML = `
-      <div class="w-14 h-14 rounded-lg bg-cream flex items-center justify-center shrink-0">
-        ${iconSvg(p.icon, 'w-7 h-7')}
-      </div>
-      <div class="flex-1 min-w-0">
-        <p class="font-display text-walnut truncate">${p.title}</p>
-        <p class="text-xs text-walnutlight/70">${p.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'} · ${formatPrice(p.price)}</p>
-      </div>
-      <button data-id="${p.id}" class="edit-btn text-sm border border-walnut/20 text-walnut px-3 py-1.5 rounded-full hover:border-clay hover:text-clay transition-colors">Düzenle</button>
-      <button data-id="${p.id}" class="delete-btn text-sm border border-danger/30 text-danger px-3 py-1.5 rounded-full hover:bg-danger/10 transition-colors">Sil</button>
-    `;
-    list.appendChild(row);
-  });
-
-  list.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => startEdit(b.dataset.id)));
-  list.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', () => deleteProduct(b.dataset.id)));
-}
-
-function resetForm() {
-  state.editingId = null;
-  document.getElementById('formTitle').textContent = 'Yeni Ürün Ekle';
-  document.getElementById('formSubmitBtn').textContent = 'Ürünü Kaydet';
-  document.getElementById('formCancelBtn').classList.add('hidden');
-  document.getElementById('productForm').reset();
-  document.getElementById('productId').value = '';
-}
-
-function startEdit(id) {
-  const p = state.products.find(x => x.id === id);
-  if (!p) return;
-  state.editingId = id;
-  document.getElementById('formTitle').textContent = 'Ürünü Güncelle';
-  document.getElementById('formSubmitBtn').textContent = 'Değişiklikleri Kaydet';
-  document.getElementById('formCancelBtn').classList.remove('hidden');
-  document.getElementById('productId').value = p.id;
-  document.getElementById('f-title').value = p.title;
-  document.getElementById('f-category').value = p.category;
-  document.getElementById('f-price').value = p.price;
-  document.getElementById('f-icon').value = p.icon;
-  document.getElementById('f-shortdesc').value = p.shortDesc;
-  document.getElementById('f-longdesc').value = p.longDesc || '';
-  document.getElementById('f-specs').value = (p.specs || []).join(', ');
-  document.getElementById('productForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-document.getElementById('formCancelBtn').addEventListener('click', resetForm);
-
-document.getElementById('productForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const submitBtn = document.getElementById('formSubmitBtn');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Kaydediliyor...';
-
-  const title = document.getElementById('f-title').value.trim();
-  const data = {
-    title,
-    category: document.getElementById('f-category').value,
-    price: Number(document.getElementById('f-price').value) || 0,
-    icon: document.getElementById('f-icon').value,
-    shortDesc: document.getElementById('f-shortdesc').value.trim(),
-    longDesc: document.getElementById('f-longdesc').value.trim(),
-    specs: document.getElementById('f-specs').value.split(',').map(s => s.trim()).filter(Boolean)
-  };
-
-  if (state.editingId) {
-    const idx = state.products.findIndex(p => p.id === state.editingId);
-    if (idx > -1) state.products[idx] = { ...state.products[idx], ...data };
-  } else {
-    let id = slugify(title) || ('urun-' + Date.now());
-    if (state.products.some(p => p.id === id)) id += '-' + Date.now().toString(36).slice(-4);
-    state.products.push({ id, ...data });
-  }
-
-  const ok = await saveProducts();
-  submitBtn.disabled = false;
-
-  if (ok) {
-    resetForm();
-    renderAdminList();
-  } else {
-    submitBtn.textContent = state.editingId ? 'Değişiklikleri Kaydet' : 'Ürünü Kaydet';
-  }
-});
-
-async function deleteProduct(id) {
-  const p = state.products.find(x => x.id === id);
-  if (!p) return;
-  if (!confirm(`"${p.title}" ürününü silmek istediğinize emin misiniz?`)) return;
-  state.products = state.products.filter(x => x.id !== id);
-  const ok = await saveProducts();
-  if (ok) renderAdminList();
-}
-
-/* =========================================================
-   SCROLL REVEAL (ana sayfa statik bölümler için)
-   ========================================================= */
-const io = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('in');
-      io.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.15 });
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-
-/* =========================================================
-   BAŞLANGIÇ
-   ========================================================= */
-router();
-</script>
-
+<script src="products.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
