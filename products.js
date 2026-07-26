@@ -35,6 +35,24 @@ function slugify(text) {
   return text.replace(/[çÇğĞıİöÖşŞüÜ]/g, m => map[m]).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+/**
+ * Kullanıcı/admin tarafından girilen metinleri innerHTML içine
+ * güvenli şekilde yerleştirmek için HTML özel karakterlerini escape eder.
+ * XSS (Cross-Site Scripting) saldırılarına karşı birincil savunma hattıdır.
+ * KURAL: Bir değişken template literal (`${...}`) içinde innerHTML'e
+ * yazılıyorsa ve kullanıcı girdisi (ürün başlığı, açıklama, özellik vb.)
+ * içeriyorsa MUTLAKA escapeHTML() ile sarmalanmalıdır.
+ */
+function escapeHTML(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /* ---- Supabase satırı <-> Uygulama ürün nesnesi dönüşümleri ---- */
 function rowToProduct(row) {
   return {
@@ -67,7 +85,7 @@ function productToRow(product) {
 function productThumbnailHtml(p, iconSizeClass) {
   const first = (p.images && p.images[0]) || null;
   if (first) {
-    return `<img src="${first}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy">`;
+    return `<img src="${escapeHTML(first)}" alt="${escapeHTML(p.title)}" class="w-full h-full object-cover" loading="lazy">`;
   }
   return iconSvg(p.icon, iconSizeClass);
 }
@@ -100,7 +118,7 @@ function renderProductVisual(p, iconSizeClass) {
 
   const html = `
     <div class="product-carousel relative w-full h-full">
-      <img data-carousel-img src="${images[0]}" alt="${p.title}" class="w-full h-full object-cover">
+      <img data-carousel-img src="${escapeHTML(images[0])}" alt="${escapeHTML(p.title)}" class="w-full h-full object-cover">
       ${arrows}
       ${dots}
     </div>`;
@@ -108,10 +126,10 @@ function renderProductVisual(p, iconSizeClass) {
   return { html, images };
 }
 
-/** renderProductVisual ile oluşturulan bir carousel'e ok/nokta olaylarını bağlar. */
+/** renderProductVisual ile oluşturulan bir carousel'e ok/nokta olaylarını, tıkla-yakınlaştır ve dokunmatik kaydırma (swipe) özelliğini bağlar. */
 function attachCarouselHandlers(container, images) {
   const carousel = container.querySelector('.product-carousel');
-  if (!carousel || images.length < 2) return;
+  if (!carousel || images.length === 0) return;
 
   let index = 0;
   const imgEl = carousel.querySelector('[data-carousel-img]');
@@ -130,6 +148,37 @@ function attachCarouselHandlers(container, images) {
   const nextBtn = carousel.querySelector('.carousel-next');
   if (prevBtn) prevBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); show(index - 1); });
   if (nextBtn) nextBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); show(index + 1); });
+
+  imgEl.style.cursor = 'zoom-in';
+  imgEl.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openLightbox(images, index);
+  });
+
+  /* ---- Mobil: parmakla sola/sağa kaydırarak görsel değiştirme ---- */
+  if (images.length > 1) {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    carousel.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    carousel.addEventListener('touchend', (e) => {
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      // Sadece belirgin şekilde yatay bir kaydırmaysa görsel değiştir
+      // (dikey kaydırma sayfa scrollu ile karışmasın diye hariç tutulur)
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) show(index + 1);
+        else show(index - 1);
+      }
+    }, { passive: true });
+  }
 }
 
 /**
@@ -223,4 +272,203 @@ async function deleteProductById(id) {
     return false;
   }
   return true;
+}
+
+/* =========================================================
+   LIGHTBOX — Tam ekran görsel yakınlaştırma
+   Ürün görsellerine tıklandığında açılır. Masaüstünde tıklayarak
+   veya fare tekerleğiyle, mobilde iki parmakla (pinch) ya da
+   çift dokunarak yakınlaştırma yapılabilir. Yakınlaştırıldığında
+   sürükleyerek gezinilebilir.
+   ========================================================= */
+
+let lightboxImages = [];
+let lightboxIndex = 0;
+let lightboxScale = 1;
+let lightboxPanX = 0;
+let lightboxPanY = 0;
+let lightboxDragging = false;
+let lightboxDragMoved = false;
+let lightboxDragStartX = 0;
+let lightboxDragStartY = 0;
+let lightboxPanStartX = 0;
+let lightboxPanStartY = 0;
+let lightboxPinchStartDist = 0;
+let lightboxPinchStartScale = 1;
+let lightboxLastTapTime = 0;
+
+function initLightbox() {
+  if (document.getElementById('lightboxOverlay')) return;
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="lightboxOverlay" class="fixed inset-0 z-[999] bg-ink/95 hidden items-center justify-center">
+      <button id="lightboxClose" type="button" aria-label="Kapat" class="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/80 hover:text-white w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <button id="lightboxPrev" type="button" aria-label="Önceki görsel" class="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 text-white/80 hover:text-white w-11 h-11 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button id="lightboxNext" type="button" aria-label="Sonraki görsel" class="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 text-white/80 hover:text-white w-11 h-11 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+      <div id="lightboxImgWrap" class="w-full h-full flex items-center justify-center overflow-hidden">
+        <img id="lightboxImg" src="" alt="" draggable="false" class="max-w-[92vw] max-h-[85vh] select-none transition-transform duration-150 ease-out">
+      </div>
+      <div id="lightboxDots" class="absolute bottom-16 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-10"></div>
+      <p class="hidden sm:block absolute bottom-6 right-6 text-white/40 text-xs z-10">Yakınlaştırmak için tıklayın, kaydırın veya sürükleyin</p>
+    </div>
+  `);
+
+  const overlay = document.getElementById('lightboxOverlay');
+  const imgWrap = document.getElementById('lightboxImgWrap');
+  const imgEl = document.getElementById('lightboxImg');
+
+  document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+  document.getElementById('lightboxPrev').addEventListener('click', () => lightboxShow(lightboxIndex - 1));
+  document.getElementById('lightboxNext').addEventListener('click', () => lightboxShow(lightboxIndex + 1));
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeLightbox();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (overlay.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') lightboxShow(lightboxIndex - 1);
+    if (e.key === 'ArrowRight') lightboxShow(lightboxIndex + 1);
+  });
+
+  // Tıklayarak yakınlaştır / uzaklaştır (sürükleme sonrası tıklamayı yok say)
+  imgEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (lightboxDragMoved) { lightboxDragMoved = false; return; }
+    toggleLightboxZoom();
+  });
+
+  // Fare tekerleği ile yakınlaştırma
+  imgWrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.3 : 0.3;
+    setLightboxScale(lightboxScale + delta);
+  }, { passive: false });
+
+  // Fare ile sürükleyerek gezinme (yakınlaştırılmışken)
+  imgWrap.addEventListener('mousedown', (e) => {
+    if (lightboxScale <= 1) return;
+    lightboxDragging = true;
+    lightboxDragMoved = false;
+    lightboxDragStartX = e.clientX;
+    lightboxDragStartY = e.clientY;
+    lightboxPanStartX = lightboxPanX;
+    lightboxPanStartY = lightboxPanY;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!lightboxDragging) return;
+    const dx = e.clientX - lightboxDragStartX;
+    const dy = e.clientY - lightboxDragStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) lightboxDragMoved = true;
+    lightboxPanX = lightboxPanStartX + dx;
+    lightboxPanY = lightboxPanStartY + dy;
+    applyLightboxTransform();
+  });
+  window.addEventListener('mouseup', () => { lightboxDragging = false; });
+
+  // Mobil: iki parmakla yakınlaştırma (pinch) ve tek parmakla gezinme
+  imgWrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      lightboxPinchStartDist = getTouchDistance(e.touches);
+      lightboxPinchStartScale = lightboxScale;
+    } else if (e.touches.length === 1 && lightboxScale > 1) {
+      lightboxDragging = true;
+      lightboxDragStartX = e.touches[0].clientX;
+      lightboxDragStartY = e.touches[0].clientY;
+      lightboxPanStartX = lightboxPanX;
+      lightboxPanStartY = lightboxPanY;
+    }
+  }, { passive: true });
+
+  imgWrap.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = getTouchDistance(e.touches);
+      setLightboxScale(lightboxPinchStartScale * (dist / lightboxPinchStartDist));
+    } else if (e.touches.length === 1 && lightboxDragging) {
+      e.preventDefault();
+      lightboxPanX = lightboxPanStartX + (e.touches[0].clientX - lightboxDragStartX);
+      lightboxPanY = lightboxPanStartY + (e.touches[0].clientY - lightboxDragStartY);
+      applyLightboxTransform();
+    }
+  }, { passive: false });
+
+  imgWrap.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) lightboxDragging = false;
+  });
+
+  // Mobil: çift dokunarak yakınlaştır / uzaklaştır
+  imgEl.addEventListener('touchend', () => {
+    const now = Date.now();
+    if (now - lightboxLastTapTime < 300) toggleLightboxZoom();
+    lightboxLastTapTime = now;
+  });
+}
+
+function getTouchDistance(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function setLightboxScale(newScale) {
+  lightboxScale = Math.min(4, Math.max(1, newScale));
+  if (lightboxScale === 1) { lightboxPanX = 0; lightboxPanY = 0; }
+  applyLightboxTransform();
+}
+
+function toggleLightboxZoom() {
+  setLightboxScale(lightboxScale > 1 ? 1 : 2.2);
+}
+
+function applyLightboxTransform() {
+  const imgEl = document.getElementById('lightboxImg');
+  imgEl.style.transform = `translate(${lightboxPanX}px, ${lightboxPanY}px) scale(${lightboxScale})`;
+  imgEl.style.cursor = lightboxScale > 1 ? 'grab' : 'zoom-in';
+}
+
+function renderLightboxNav() {
+  const prevBtn = document.getElementById('lightboxPrev');
+  const nextBtn = document.getElementById('lightboxNext');
+  const dotsEl = document.getElementById('lightboxDots');
+  const multi = lightboxImages.length > 1;
+  prevBtn.classList.toggle('hidden', !multi);
+  nextBtn.classList.toggle('hidden', !multi);
+  dotsEl.innerHTML = multi
+    ? lightboxImages.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === lightboxIndex ? 'bg-white' : 'bg-white/40'}"></span>`).join('')
+    : '';
+}
+
+function lightboxShow(i) {
+  lightboxIndex = (i + lightboxImages.length) % lightboxImages.length;
+  document.getElementById('lightboxImg').src = lightboxImages[lightboxIndex];
+  setLightboxScale(1);
+  renderLightboxNav();
+}
+
+/** Tam ekran görsel görüntüleyiciyi açar. images: URL dizisi, startIndex: başlangıç görseli. */
+function openLightbox(images, startIndex) {
+  if (!images || images.length === 0) return;
+  initLightbox();
+  lightboxImages = images;
+  lightboxShow(startIndex || 0);
+  const overlay = document.getElementById('lightboxOverlay');
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const overlay = document.getElementById('lightboxOverlay');
+  if (!overlay) return;
+  overlay.classList.add('hidden');
+  overlay.classList.remove('flex');
+  document.body.style.overflow = '';
 }
