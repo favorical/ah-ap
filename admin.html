@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   tailwind.config = {
     theme: { extend: {
@@ -36,14 +37,15 @@
   <!-- Login -->
   <div id="adminLogin" class="max-w-sm mx-auto bg-cream/60 border border-walnut/10 rounded-2xl p-8 mt-10">
     <h1 class="font-display text-2xl text-walnut mb-2">Yönetici Girişi</h1>
-    <p class="text-sm text-walnutlight mb-6">Ürünleri eklemek, düzenlemek veya kaldırmak için giriş yapın.</p>
+    <p class="text-sm text-walnutlight mb-6">Ürünleri eklemek, düzenlemek veya kaldırmak için Supabase hesabınızla giriş yapın.</p>
     <form id="adminLoginForm" class="flex flex-col gap-3">
-      <input type="password" id="adminPasscode" placeholder="Şifre" class="w-full border border-walnut/20 rounded-lg px-4 py-2.5 bg-paper" required>
-      <p id="adminLoginError" class="text-danger text-sm hidden">Şifre hatalı, tekrar deneyin.</p>
+      <input type="email" id="adminEmail" placeholder="E-posta" autocomplete="username" class="w-full border border-walnut/20 rounded-lg px-4 py-2.5 bg-paper" required>
+      <input type="password" id="adminPasscode" placeholder="Şifre" autocomplete="current-password" class="w-full border border-walnut/20 rounded-lg px-4 py-2.5 bg-paper" required>
+      <p id="adminLoginError" class="text-danger text-sm hidden">E-posta veya şifre hatalı.</p>
       <button type="submit" class="bg-walnut text-paper px-5 py-2.5 rounded-full font-medium hover:bg-sagedark transition-colors">Giriş Yap</button>
     </form>
     <p class="text-xs text-walnutlight/60 mt-5 leading-relaxed">
-      Not: Bu, tarayıcı taraflı basit bir erişim korumasıdır, gerçek bir kimlik doğrulama sistemi değildir. Demo şifre: <span class="font-mono">atolye2026</span>
+      Yönetici hesabınız yoksa Supabase Dashboard → Authentication → Users bölümünden bir kullanıcı oluşturun.
     </p>
   </div>
 
@@ -119,14 +121,15 @@
       <!-- List -->
       <div class="lg:col-span-3">
         <h2 class="font-display text-xl text-walnut mb-5">Mevcut Ürünler (<span id="adminCount">0</span>)</h2>
-        <div id="adminProductList" class="flex flex-col gap-3"></div>
+        <div id="adminProductList" class="flex flex-col gap-3">
+          <div class="flex justify-center py-10"><div class="spinner"></div></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="products.js"></script>
-  <script src="main.js"></script>
+<script src="products.js"></script>
+<script src="admin.js"></script>
 </body>
 </html>
