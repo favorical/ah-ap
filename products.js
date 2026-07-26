@@ -1,41 +1,16 @@
 /* =========================================================
-   MEŞE ATÖLYE — Ortak Veri Katmanı
+   MEŞE ATÖLYE — Ortak Veri Katmanı (Supabase)
    index.html, detay.html ve admin.html tarafından kullanılır.
-   Veriler tarayıcının localStorage'ında saklanır: admin.html'de
-   yapılan değişiklikler AYNI TARAYICIDA index.html ve detay.html'e yansır.
-   Not: localStorage tarayıcıya özeldir; farklı cihaz/tarayıcılar
-   arasında paylaşım için bir sunucu/veritabanı gerekir.
+   Bu dosyadan ÖNCE Supabase CDN script'inin yüklenmiş olması gerekir:
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
    ========================================================= */
 
-const STORAGE_KEY = 'mese-atolye-products';
-const WHATSAPP_NUMBER = '905551112233';
+const SUPABASE_URL = 'https://vmprdjqtllodupllhiol.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_wuk4zQJflaZfo3lkVb1a4w_bhwt6i56';
 
-const defaultProducts = [
-  { id: 'p1', title: 'Masif Ahşap Yemek Masası', category: 'mobilya', price: 18500, icon: 'table',
-    shortDesc: 'Ceviz ağacından, 8 kişilik, doğal kenar dokusu korunmuş tek parça masa.',
-    longDesc: 'Bu yemek masası, tek bir ceviz kütüğünden, ağacın doğal kenar hattı korunarak üretilmiştir. Yüzey, çok katmanlı doğal yağ ile cilalanarak hem dokunuşta sıcak hem de leke ve neme dayanıklı hale getirilmiştir. Her masa kendine has damar deseniyle biriciktir.',
-    specs: ['Ceviz ağacı', '8 kişilik', '220 x 95 cm', 'Doğal yağ cila', 'Kenar hattı korunmuş'] },
-  { id: 'p2', title: 'Epoksi Ahşap Sehpa', category: 'mobilya', price: 7200, icon: 'coffee-table',
-    shortDesc: 'Meşe gövde ve lacivert epoksi reçine dolgulu, oturma odaları için orta sehpa.',
-    longDesc: 'Meşe ahşabın doğal çatlakları, UV dayanımlı epoksi reçine ile doldurularak nehir görünümü elde edilmiştir. Metal ayaklar siyah elektrostatik boya ile kaplanmıştır.',
-    specs: ['Meşe ahşap', 'Epoksi reçine dolgu', 'Metal ayak', '110 x 55 cm'] },
-  { id: 'p3', title: 'Ahşap Kitaplık', category: 'mobilya', price: 9800, icon: 'shelf',
-    shortDesc: 'Gürgen ahşaptan, duvara monteli, 5 raflı minimalist kitaplık.',
-    longDesc: 'Duvara sabitlenen bu kitaplık, gürgen ahşabın doğal sarı tonunu korur. Görünür vida veya bağlantı parçası bulunmaz; gizli montaj sistemi kullanılmıştır.',
-    specs: ['Gürgen ahşap', '5 raf', 'Gizli montaj', '160 x 180 cm'] },
-  { id: 'p4', title: 'Kişiselleştirilmiş Ahşap Saat', category: 'hediyelik', price: 650, icon: 'clock',
-    shortDesc: 'İsim veya tarih işlemeli, ceviz kaplama duvar saati.',
-    longDesc: 'İstediğiniz ismi, tarihi veya kısa bir mesajı lazer işleme ile saatin üzerine işliyoruz. Sessiz mekanizma sayesinde tik-tak sesi neredeyse duyulmaz.',
-    specs: ['Ceviz kaplama', 'Lazer kişiselleştirme', 'Sessiz mekanizma', 'Çap 30 cm'] },
-  { id: 'p5', title: 'Ahşap Sunum Tahtası', category: 'hediyelik', price: 450, icon: 'board',
-    shortDesc: 'Zeytin ağacından, kulplu, kahvaltılık ve peynir sunumları için.',
-    longDesc: 'Zeytin ağacının kendine özgü desenleri, her tahtayı farklı kılar. Gıdayla temasa uygun doğal yağ ile kaplanmıştır, kulpu sayesinde kolayca taşınır.',
-    specs: ['Zeytin ağacı', 'Gıda dostu yağ kaplama', 'Taşıma kulpu', '40 x 24 cm'] },
-  { id: 'p6', title: 'El Yapımı Ahşap Kutu', category: 'hediyelik', price: 380, icon: 'box',
-    shortDesc: 'Menteşeli, kadife astarlı, takı veya anı saklama kutusu.',
-    longDesc: 'İç kısmı yumuşak kadife ile astarlanmış bu kutu, takı, saat veya anlam taşıyan küçük eşyaları saklamak için üretilmiştir. İsteğe bağlı kapak üzeri gravür yapılabilir.',
-    specs: ['Ceviz/meşe seçenekli', 'Kadife astar', 'Pirinç menteşe', '18 x 13 x 8 cm'] }
-];
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const WHATSAPP_NUMBER = '905551112233';
 
 const icons = {
   table: '<path d="M4 8h16M6 8v10M18 8v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
@@ -60,26 +35,93 @@ function slugify(text) {
   return text.replace(/[çÇğĞıİöÖşŞüÜ]/g, m => map[m]).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-/** Ürünleri localStorage'dan okur; hiç kayıt yoksa varsayılanları yazıp döner. */
-function loadProducts() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {
-    console.warn('Ürünler okunamadı, varsayılanlar kullanılıyor.', e);
-  }
-  saveProducts(defaultProducts);
-  return defaultProducts.slice();
+/* ---- Supabase satırı <-> Uygulama ürün nesnesi dönüşümleri ---- */
+function rowToProduct(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    price: row.price,
+    icon: row.icon,
+    shortDesc: row.short_desc,
+    longDesc: row.long_desc,
+    specs: row.specs || []
+  };
 }
 
-/** Ürün listesini localStorage'a yazar. Başarısız olursa false döner. */
-function saveProducts(products) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-    return true;
-  } catch (e) {
-    console.error('Depolama hatası:', e);
-    alert('Veriler kaydedilirken bir hata oluştu. Tarayıcı depolama alanı dolu ya da gizli sekme modunda olabilirsiniz.');
+function productToRow(product) {
+  return {
+    title: product.title,
+    category: product.category,
+    price: product.price,
+    icon: product.icon,
+    short_desc: product.shortDesc,
+    long_desc: product.longDesc,
+    specs: product.specs || []
+  };
+}
+
+/** Tüm ürünleri Supabase'den çeker. */
+async function fetchProducts() {
+  const { data, error } = await sbClient
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Ürünler alınamadı:', error);
+    alert('Ürünler yüklenirken bir hata oluştu: ' + error.message);
+    return [];
+  }
+  return (data || []).map(rowToProduct);
+}
+
+/** Tek bir ürünü id'sine göre çeker. */
+async function fetchProductById(id) {
+  const { data, error } = await sbClient
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Ürün alınamadı:', error);
+    return null;
+  }
+  return data ? rowToProduct(data) : null;
+}
+
+/** Yeni ürün ekler. product nesnesinde id de bulunmalıdır. */
+async function insertProduct(product) {
+  const row = { id: product.id, ...productToRow(product) };
+  const { error } = await sbClient.from('products').insert(row);
+  if (error) {
+    console.error('Ürün eklenemedi:', error);
+    alert('Ürün eklenemedi: ' + error.message);
     return false;
   }
+  return true;
+}
+
+/** Var olan bir ürünü günceller. */
+async function updateProductById(id, product) {
+  const row = productToRow(product);
+  const { error } = await sbClient.from('products').update(row).eq('id', id);
+  if (error) {
+    console.error('Ürün güncellenemedi:', error);
+    alert('Ürün güncellenemedi: ' + error.message);
+    return false;
+  }
+  return true;
+}
+
+/** Bir ürünü siler. */
+async function deleteProductById(id) {
+  const { error } = await sbClient.from('products').delete().eq('id', id);
+  if (error) {
+    console.error('Ürün silinemedi:', error);
+    alert('Ürün silinemedi: ' + error.message);
+    return false;
+  }
+  return true;
 }
