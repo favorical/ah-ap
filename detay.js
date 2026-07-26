@@ -4,16 +4,11 @@
    Kullanım: detay.html?id=p1
    ========================================================= */
 
-const allProducts = loadProducts();
-const params = new URLSearchParams(window.location.search);
-const productId = params.get('id');
-const product = allProducts.find(p => p.id === productId);
-
 const breadcrumb = document.getElementById('detailBreadcrumb');
 const content = document.getElementById('detailContent');
 const related = document.getElementById('detailRelated');
 
-if (!product) {
+function renderNotFound() {
   breadcrumb.innerHTML = '';
   content.innerHTML = `
     <div class="text-center py-20">
@@ -22,7 +17,27 @@ if (!product) {
       <a href="index.html#urunler" class="bg-walnut text-paper px-6 py-3 rounded-full font-medium">Kataloğa Dön</a>
     </div>`;
   related.innerHTML = '';
-} else {
+}
+
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const productId = params.get('id');
+
+  if (!productId) {
+    renderNotFound();
+    return;
+  }
+
+  const [product, allProducts] = await Promise.all([
+    fetchProductById(productId),
+    fetchProducts()
+  ]);
+
+  if (!product) {
+    renderNotFound();
+    return;
+  }
+
   document.title = product.title + ' | Meşe Atölye';
 
   breadcrumb.innerHTML = `
@@ -82,3 +97,5 @@ if (!product) {
     related.innerHTML = '';
   }
 }
+
+init();
