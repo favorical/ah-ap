@@ -7,6 +7,30 @@
 
 let products = [];
 let editingId = null;
+let currentImageUrl = null; // düzenlenen üründeki mevcut görsel (yeni dosya seçilmezse korunur)
+
+const imageInput = document.getElementById('f-image');
+const imagePreviewWrap = document.getElementById('imagePreviewWrap');
+const imagePreview = document.getElementById('imagePreview');
+const removeImageBtn = document.getElementById('removeImageBtn');
+
+imageInput.addEventListener('change', () => {
+  const file = imageInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.src = e.target.result;
+    imagePreviewWrap.classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+});
+
+removeImageBtn.addEventListener('click', () => {
+  imageInput.value = '';
+  currentImageUrl = null;
+  imagePreview.src = '';
+  imagePreviewWrap.classList.add('hidden');
+});
 
 const adminLoginForm = document.getElementById('adminLoginForm');
 const adminLoginBox = document.getElementById('adminLogin');
@@ -82,8 +106,8 @@ function renderAdminList() {
     const row = document.createElement('div');
     row.className = 'flex items-center gap-4 bg-paper border border-walnut/10 rounded-xl p-3';
     row.innerHTML = `
-      <div class="w-14 h-14 rounded-lg bg-cream flex items-center justify-center shrink-0">
-        ${iconSvg(p.icon, 'w-7 h-7')}
+      <div class="w-14 h-14 rounded-lg bg-cream flex items-center justify-center shrink-0 overflow-hidden">
+        ${productVisualHtml(p, 'w-7 h-7')}
       </div>
       <div class="flex-1 min-w-0">
         <p class="font-display text-walnut truncate">${p.title}</p>
@@ -102,11 +126,14 @@ function renderAdminList() {
 
 function resetForm() {
   editingId = null;
+  currentImageUrl = null;
   document.getElementById('formTitle').textContent = 'Yeni Ürün Ekle';
   document.getElementById('formSubmitBtn').textContent = 'Ürünü Kaydet';
   document.getElementById('formCancelBtn').classList.add('hidden');
   document.getElementById('productForm').reset();
   document.getElementById('productId').value = '';
+  imagePreviewWrap.classList.add('hidden');
+  imagePreview.src = '';
 }
 
 function startEdit(id) {
@@ -124,6 +151,17 @@ function startEdit(id) {
   document.getElementById('f-shortdesc').value = p.shortDesc;
   document.getElementById('f-longdesc').value = p.longDesc || '';
   document.getElementById('f-specs').value = (p.specs || []).join(', ');
+
+  currentImageUrl = p.imageUrl || null;
+  imageInput.value = '';
+  if (currentImageUrl) {
+    imagePreview.src = currentImageUrl;
+    imagePreviewWrap.classList.remove('hidden');
+  } else {
+    imagePreview.src = '';
+    imagePreviewWrap.classList.add('hidden');
+  }
+
   document.getElementById('productForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -145,14 +183,37 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     icon: document.getElementById('f-icon').value,
     shortDesc: document.getElementById('f-shortdesc').value.trim(),
     longDesc: document.getElementById('f-longdesc').value.trim(),
-    specs: document.getElementById('f-specs').value.split(',').map(s => s.trim()).filter(Boolean)
+    specs: document.getElementById('f-specs').value.split(',').map(s => s.trim()).filter(Boolean),
+    imageUrl: currentImageUrl
   };
+
+  const newId = editingId || slugify(title) || ('urun-' + Date.now());
+
+  const file = imageInput.files[0];
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Görsel 5 MB\'tan küçük olmalı.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      return;
+    }
+    submitBtn.textContent = 'Görsel yükleniyor...';
+    const uploadedUrl = await uploadProductImage(file, newId);
+    if (!uploadedUrl) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      return;
+    }
+    data.imageUrl = uploadedUrl;
+  }
+
+  submitBtn.textContent = 'Kaydediliyor...';
 
   let ok;
   if (editingId) {
     ok = await updateProductById(editingId, data);
   } else {
-    let id = slugify(title) || ('urun-' + Date.now());
+    let id = newId;
     if (products.some(p => p.id === id)) id += '-' + Date.now().toString(36).slice(-4);
     data.id = id;
     ok = await insertProduct(data);
