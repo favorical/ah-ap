@@ -87,13 +87,10 @@
               </div>
             </div>
             <div>
-              <label class="text-xs uppercase tracking-wide text-walnutlight/70">Ürün Görseli</label>
-              <input type="file" id="f-image" accept="image/*" class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1 text-sm">
-              <p class="text-xs text-walnutlight/60 mt-1">Görsel yüklemezseniz aşağıdaki ikon kullanılır.</p>
-              <div id="imagePreviewWrap" class="hidden mt-2 flex items-center gap-3">
-                <img id="imagePreview" class="w-20 h-20 object-cover rounded-lg border border-walnut/10" alt="Önizleme">
-                <button type="button" id="removeImageBtn" class="text-xs text-danger underline underline-offset-2">Görseli Kaldır</button>
-              </div>
+              <label class="text-xs uppercase tracking-wide text-walnutlight/70">Ürün Görselleri (birden fazla seçebilirsiniz)</label>
+              <input type="file" id="f-image" accept="image/*" multiple class="w-full border border-walnut/20 rounded-lg px-3 py-2 bg-paper mt-1 text-sm">
+              <p class="text-xs text-walnutlight/60 mt-1">Hiç görsel eklemezseniz aşağıdaki ikon kullanılır. Dosya seçme penceresini birden fazla kez açarak da ekleyebilirsiniz.</p>
+              <div id="imagePreviewList" class="flex flex-wrap gap-2 mt-3"></div>
             </div>
             <div>
               <label class="text-xs uppercase tracking-wide text-walnutlight/70">İkon (görsel yoksa kullanılır)</label>
