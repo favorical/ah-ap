@@ -43,6 +43,7 @@ function rowToProduct(row) {
     category: row.category,
     price: row.price,
     icon: row.icon,
+    imageUrl: row.image_url || null,
     shortDesc: row.short_desc,
     longDesc: row.long_desc,
     specs: row.specs || []
@@ -55,10 +56,47 @@ function productToRow(product) {
     category: product.category,
     price: product.price,
     icon: product.icon,
+    image_url: product.imageUrl || null,
     short_desc: product.shortDesc,
     long_desc: product.longDesc,
     specs: product.specs || []
   };
+}
+
+/** Ürün görselini (varsa) veya ikonunu gösteren HTML döner. */
+function productVisualHtml(p, iconSizeClass) {
+  if (p.imageUrl) {
+    return `<img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy">`;
+  }
+  return iconSvg(p.icon, iconSizeClass);
+}
+
+/**
+ * Bir dosyayı 'product-images' bucket'ına yükler ve genel (public) URL'sini döner.
+ * Hata olursa null döner ve kullanıcıya alert gösterir.
+ */
+async function uploadProductImage(file, idHint) {
+  try {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${idHint || 'urun'}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await sbClient
+      .storage
+      .from('product-images')
+      .upload(path, file, { upsert: true, cacheControl: '3600' });
+
+    if (uploadError) {
+      console.error('Görsel yüklenemedi:', uploadError);
+      alert('Görsel yüklenemedi: ' + uploadError.message);
+      return null;
+    }
+
+    const { data } = sbClient.storage.from('product-images').getPublicUrl(path);
+    return data.publicUrl;
+  } catch (e) {
+    console.error('Görsel yükleme hatası:', e);
+    alert('Görsel yüklenirken beklenmeyen bir hata oluştu.');
+    return null;
+  }
 }
 
 /** Tüm ürünleri Supabase'den çeker. */
