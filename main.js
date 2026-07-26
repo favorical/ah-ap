@@ -5,6 +5,7 @@
 
 let allProducts = [];
 let currentFilter = 'all';
+let searchQuery = '';
 
 /* ---- Mobil menü ---- */
 const menuBtn = document.getElementById('menuBtn');
@@ -16,11 +17,18 @@ mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => 
 const grid = document.getElementById('productGrid');
 
 function renderProductGrid() {
-  const items = allProducts.filter(p => currentFilter === 'all' || p.category === currentFilter);
+  const q = searchQuery.trim().toLocaleLowerCase('tr');
+  const items = allProducts.filter(p => {
+    const matchesCategory = currentFilter === 'all' || p.category === currentFilter;
+    const matchesQuery = !q ||
+      p.title.toLocaleLowerCase('tr').includes(q) ||
+      (p.shortDesc || '').toLocaleLowerCase('tr').includes(q);
+    return matchesCategory && matchesQuery;
+  });
   grid.innerHTML = '';
 
   if (items.length === 0) {
-    grid.innerHTML = '<p class="col-span-full text-center text-walnutlight py-10">Bu kategoride henüz ürün yok.</p>';
+    grid.innerHTML = `<p class="col-span-full text-center text-walnutlight py-10">${q ? 'Aramanızla eşleşen ürün bulunamadı.' : 'Bu kategoride henüz ürün yok.'}</p>`;
     return;
   }
 
@@ -35,8 +43,8 @@ function renderProductGrid() {
       </div>
       <div class="p-6 flex flex-col flex-1">
         <span class="text-xs uppercase tracking-widest text-sage font-medium mb-2">${p.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'}</span>
-        <h3 class="font-display text-xl text-walnut mb-2">${p.title}</h3>
-        <p class="text-sm text-walnutlight leading-relaxed flex-1">${p.shortDesc}</p>
+        <h3 class="font-display text-xl text-walnut mb-2">${escapeHTML(p.title)}</h3>
+        <p class="text-sm text-walnutlight leading-relaxed flex-1">${escapeHTML(p.shortDesc)}</p>
         <div class="flex items-center justify-between mt-5 mb-4">
           <span class="font-display text-lg text-clay">${formatPrice(p.price)}</span>
         </div>
@@ -59,6 +67,26 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     renderProductGrid();
   });
 });
+
+/* ---- Canlı arama ---- */
+const searchInput = document.getElementById('searchInput');
+const searchClearBtn = document.getElementById('searchClear');
+
+if (searchInput) {
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value;
+    searchClearBtn.classList.toggle('hidden', searchQuery.length === 0);
+    renderProductGrid();
+  });
+
+  searchClearBtn.addEventListener('click', () => {
+    searchQuery = '';
+    searchInput.value = '';
+    searchClearBtn.classList.add('hidden');
+    searchInput.focus();
+    renderProductGrid();
+  });
+}
 
 /* ---- Scroll reveal ---- */
 const io = new IntersectionObserver((entries) => {
