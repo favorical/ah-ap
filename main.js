@@ -26,11 +26,12 @@ function renderProductGrid() {
 
   items.forEach(p => {
     const waMsg = encodeURIComponent(`Merhaba, "${p.title}" ürünü hakkında bilgi almak istiyorum.`);
+    const visual = renderProductVisual(p, 'w-16 h-16');
     const card = document.createElement('article');
     card.className = 'card-lift bg-paper border border-walnut/10 rounded-2xl overflow-hidden flex flex-col';
     card.innerHTML = `
-      <div class="h-48 ${p.imageUrl ? 'bg-cream' : 'grain-bg bg-cream'} flex items-center justify-center border-b border-walnut/10 overflow-hidden">
-        ${productVisualHtml(p, 'w-16 h-16')}
+      <div class="h-48 ${visual.images.length ? 'bg-cream' : 'grain-bg bg-cream'} flex items-center justify-center border-b border-walnut/10 overflow-hidden">
+        ${visual.html}
       </div>
       <div class="p-6 flex flex-col flex-1">
         <span class="text-xs uppercase tracking-widest text-sage font-medium mb-2">${p.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'}</span>
@@ -46,6 +47,7 @@ function renderProductGrid() {
       </div>
     `;
     grid.appendChild(card);
+    attachCarouselHandlers(card, visual.images);
   });
 }
 
