@@ -40,19 +40,31 @@ async function init() {
 
   document.title = product.title + ' | Meşe Atölye';
 
+  // Google gibi JavaScript çalıştıran arama motoru botları için meta etiketlerini
+  // ürüne göre güncelle. (WhatsApp/Facebook gibi JS çalıştırmayan paylaşım
+  // botları bunu göremez — bkz. sohbetteki açıklama.)
+  const metaDescEl = document.querySelector('meta[name="description"]');
+  if (metaDescEl) metaDescEl.setAttribute('content', product.shortDesc || '');
+  const ogTitleEl = document.querySelector('meta[property="og:title"]');
+  if (ogTitleEl) ogTitleEl.setAttribute('content', product.title + ' | Meşe Atölye');
+  const ogDescEl = document.querySelector('meta[property="og:description"]');
+  if (ogDescEl) ogDescEl.setAttribute('content', product.shortDesc || '');
+  const ogImageEl = document.querySelector('meta[property="og:image"]');
+  if (ogImageEl && product.images && product.images[0]) ogImageEl.setAttribute('content', product.images[0]);
+
   breadcrumb.innerHTML = `
     <a href="index.html" class="hover:text-clay">Ana Sayfa</a>
     <span>/</span>
     <a href="index.html#urunler" class="hover:text-clay">Ürünlerimiz</a>
     <span>/</span>
-    <span class="text-walnut">${product.title}</span>
+    <span class="text-walnut">${escapeHTML(product.title)}</span>
   `;
 
   const waMsg = encodeURIComponent(`Merhaba, "${product.title}" ürününü sipariş etmek istiyorum.`);
   const specsHtml = (product.specs || []).map(s => `
     <li class="flex items-start gap-2 text-sm text-walnutlight">
       <svg class="w-4 h-4 mt-0.5 text-sage shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-      ${s}
+      ${escapeHTML(s)}
     </li>`).join('');
 
   const visual = renderProductVisual(product, 'w-32 h-32');
@@ -64,10 +76,10 @@ async function init() {
       </div>
       <div>
         <span class="text-xs uppercase tracking-widest text-sage font-medium">${product.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'}</span>
-        <h1 class="font-display text-3xl sm:text-4xl text-walnut mt-2 mb-4">${product.title}</h1>
+        <h1 class="font-display text-3xl sm:text-4xl text-walnut mt-2 mb-4">${escapeHTML(product.title)}</h1>
         <p class="font-display text-2xl text-clay mb-6">${formatPrice(product.price)}</p>
-        <p class="text-walnutlight leading-relaxed mb-6">${product.shortDesc}</p>
-        ${product.longDesc ? `<p class="text-walnutlight leading-relaxed mb-6">${product.longDesc}</p>` : ''}
+        <p class="text-walnutlight leading-relaxed mb-6">${escapeHTML(product.shortDesc)}</p>
+        ${product.longDesc ? `<p class="text-walnutlight leading-relaxed mb-6">${escapeHTML(product.longDesc)}</p>` : ''}
         ${specsHtml ? `<ul class="flex flex-col gap-2 mb-8">${specsHtml}</ul>` : ''}
         <div class="flex flex-col sm:flex-row gap-3">
           <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-center px-6 py-3.5 rounded-full font-medium hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
@@ -89,7 +101,7 @@ async function init() {
               ${productThumbnailHtml(p, 'w-10 h-10')}
             </div>
             <div class="p-4">
-              <h3 class="font-display text-base text-walnut mb-1">${p.title}</h3>
+              <h3 class="font-display text-base text-walnut mb-1">${escapeHTML(p.title)}</h3>
               <span class="text-clay text-sm">${formatPrice(p.price)}</span>
             </div>
           </a>
