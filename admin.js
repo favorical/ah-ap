@@ -7,29 +7,55 @@
 
 let products = [];
 let editingId = null;
-let currentImageUrl = null; // düzenlenen üründeki mevcut görsel (yeni dosya seçilmezse korunur)
+let existingImages = [];   // düzenlenen üründe zaten kayıtlı olan, silinmemiş görsel URL'leri
+let pendingFiles = [];     // henüz yüklenmemiş, yeni seçilmiş dosyalar
 
 const imageInput = document.getElementById('f-image');
-const imagePreviewWrap = document.getElementById('imagePreviewWrap');
-const imagePreview = document.getElementById('imagePreview');
-const removeImageBtn = document.getElementById('removeImageBtn');
+const imagePreviewList = document.getElementById('imagePreviewList');
+
+function renderImagePreviews() {
+  imagePreviewList.innerHTML = '';
+
+  existingImages.forEach((url, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'relative w-16 h-16';
+    wrap.innerHTML = `
+      <img src="${url}" class="w-16 h-16 object-cover rounded-lg border border-walnut/10">
+      <button type="button" data-type="existing" data-idx="${idx}" class="remove-image-btn absolute -top-1.5 -right-1.5 bg-danger text-white w-5 h-5 rounded-full flex items-center justify-center text-xs leading-none">×</button>
+    `;
+    imagePreviewList.appendChild(wrap);
+  });
+
+  pendingFiles.forEach((file, idx) => {
+    const url = URL.createObjectURL(file);
+    const wrap = document.createElement('div');
+    wrap.className = 'relative w-16 h-16';
+    wrap.innerHTML = `
+      <img src="${url}" class="w-16 h-16 object-cover rounded-lg border border-sage/50">
+      <button type="button" data-type="pending" data-idx="${idx}" class="remove-image-btn absolute -top-1.5 -right-1.5 bg-danger text-white w-5 h-5 rounded-full flex items-center justify-center text-xs leading-none">×</button>
+      <span class="absolute bottom-0 inset-x-0 bg-sage/90 text-white text-[9px] text-center rounded-b-lg leading-tight">Yeni</span>
+    `;
+    imagePreviewList.appendChild(wrap);
+  });
+
+  imagePreviewList.querySelectorAll('.remove-image-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.idx);
+      if (btn.dataset.type === 'existing') existingImages.splice(idx, 1);
+      else pendingFiles.splice(idx, 1);
+      renderImagePreviews();
+    });
+  });
+}
 
 imageInput.addEventListener('change', () => {
-  const file = imageInput.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    imagePreview.src = e.target.result;
-    imagePreviewWrap.classList.remove('hidden');
-  };
-  reader.readAsDataURL(file);
-});
-
-removeImageBtn.addEventListener('click', () => {
-  imageInput.value = '';
-  currentImageUrl = null;
-  imagePreview.src = '';
-  imagePreviewWrap.classList.add('hidden');
+  const files = Array.from(imageInput.files || []);
+  files.forEach(file => {
+    const isDup = pendingFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+    if (!isDup) pendingFiles.push(file);
+  });
+  imageInput.value = ''; // aynı pencereyi tekrar açıp başka dosya eklemeye izin verir
+  renderImagePreviews();
 });
 
 const adminLoginForm = document.getElementById('adminLoginForm');
@@ -107,7 +133,7 @@ function renderAdminList() {
     row.className = 'flex items-center gap-4 bg-paper border border-walnut/10 rounded-xl p-3';
     row.innerHTML = `
       <div class="w-14 h-14 rounded-lg bg-cream flex items-center justify-center shrink-0 overflow-hidden">
-        ${productVisualHtml(p, 'w-7 h-7')}
+        ${productThumbnailHtml(p, 'w-7 h-7')}
       </div>
       <div class="flex-1 min-w-0">
         <p class="font-display text-walnut truncate">${p.title}</p>
@@ -126,14 +152,14 @@ function renderAdminList() {
 
 function resetForm() {
   editingId = null;
-  currentImageUrl = null;
+  existingImages = [];
+  pendingFiles = [];
   document.getElementById('formTitle').textContent = 'Yeni Ürün Ekle';
   document.getElementById('formSubmitBtn').textContent = 'Ürünü Kaydet';
   document.getElementById('formCancelBtn').classList.add('hidden');
   document.getElementById('productForm').reset();
   document.getElementById('productId').value = '';
-  imagePreviewWrap.classList.add('hidden');
-  imagePreview.src = '';
+  renderImagePreviews();
 }
 
 function startEdit(id) {
@@ -152,15 +178,10 @@ function startEdit(id) {
   document.getElementById('f-longdesc').value = p.longDesc || '';
   document.getElementById('f-specs').value = (p.specs || []).join(', ');
 
-  currentImageUrl = p.imageUrl || null;
+  existingImages = [...(p.images || [])];
+  pendingFiles = [];
   imageInput.value = '';
-  if (currentImageUrl) {
-    imagePreview.src = currentImageUrl;
-    imagePreviewWrap.classList.remove('hidden');
-  } else {
-    imagePreview.src = '';
-    imagePreviewWrap.classList.add('hidden');
-  }
+  renderImagePreviews();
 
   document.getElementById('productForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -183,29 +204,27 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     icon: document.getElementById('f-icon').value,
     shortDesc: document.getElementById('f-shortdesc').value.trim(),
     longDesc: document.getElementById('f-longdesc').value.trim(),
-    specs: document.getElementById('f-specs').value.split(',').map(s => s.trim()).filter(Boolean),
-    imageUrl: currentImageUrl
+    specs: document.getElementById('f-specs').value.split(',').map(s => s.trim()).filter(Boolean)
   };
 
   const newId = editingId || slugify(title) || ('urun-' + Date.now());
 
-  const file = imageInput.files[0];
-  if (file) {
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Görsel 5 MB\'tan küçük olmalı.');
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
-      return;
+  const uploadedUrls = [];
+  if (pendingFiles.length > 0) {
+    submitBtn.textContent = `Görseller yükleniyor (0/${pendingFiles.length})...`;
+    for (let i = 0; i < pendingFiles.length; i++) {
+      const file = pendingFiles[i];
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`"${file.name}" 5 MB'tan büyük olduğu için atlandı.`);
+        continue;
+      }
+      const url = await uploadProductImage(file, newId);
+      if (url) uploadedUrls.push(url);
+      submitBtn.textContent = `Görseller yükleniyor (${i + 1}/${pendingFiles.length})...`;
     }
-    submitBtn.textContent = 'Görsel yükleniyor...';
-    const uploadedUrl = await uploadProductImage(file, newId);
-    if (!uploadedUrl) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
-      return;
-    }
-    data.imageUrl = uploadedUrl;
   }
+
+  data.images = [...existingImages, ...uploadedUrls];
 
   submitBtn.textContent = 'Kaydediliyor...';
 
