@@ -70,5 +70,7 @@ const io = new IntersectionObserver((entries) => {
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 /* ---- Başlangıç ---- */
-allProducts = loadProducts();
-renderProductGrid();
+(async function init() {
+  allProducts = await fetchProducts();
+  renderProductGrid();
+})();
