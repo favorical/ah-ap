@@ -5,6 +5,67 @@
    Yönetici hesabı: Supabase Dashboard → Authentication → Users
    ========================================================= */
 
+/* =========================================================
+   GÖRSEL SIKIŞTIRMA (Canvas API)
+   Yüklenen görseller Supabase'e gönderilmeden önce tarayıcıda
+   sıkıştırılır: genişlik en fazla 1200px'e indirilir ve
+   %80 kalitede WebP formatına dönüştürülür. Bu; depolama
+   alanından tasarruf sağlar ve sitenin açılış hızını artırır.
+   ========================================================= */
+
+/** Bir File/Blob'u <img> ya da ImageBitmap olarak yükler (tarayıcı desteğine göre). */
+function loadImageSource(file) {
+  if (window.createImageBitmap) {
+    return createImageBitmap(file);
+  }
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => { resolve(img); URL.revokeObjectURL(url); };
+    img.onerror = (err) => { URL.revokeObjectURL(url); reject(err); };
+    img.src = url;
+  });
+}
+
+/**
+ * Görseli en fazla maxWidth genişliğe küçültüp WebP'ye çevirir.
+ * Sıkıştırma başarısız olursa (ör. tarayıcı WebP desteklemiyorsa)
+ * orijinal dosyayı olduğu gibi döner — böylece yükleme hiçbir
+ * zaman tamamen başarısız olmaz.
+ */
+async function compressImage(file, maxWidth = 1200, quality = 0.8) {
+  try {
+    const source = await loadImageSource(file);
+    const sourceWidth = source.width;
+    const sourceHeight = source.height;
+
+    const scale = Math.min(1, maxWidth / sourceWidth);
+    const targetWidth = Math.round(sourceWidth * scale);
+    const targetHeight = Math.round(sourceHeight * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(source, 0, 0, targetWidth, targetHeight);
+
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob((b) => resolve(b), 'image/webp', quality);
+    });
+
+    if (!blob) {
+      console.warn('Tarayıcı WebP dönüşümünü desteklemiyor, orijinal dosya kullanılacak.');
+      return file;
+    }
+
+    const newName = file.name.replace(/\.[^./\\]+$/, '') + '.webp';
+    return new File([blob], newName, { type: 'image/webp' });
+  } catch (e) {
+    console.warn('Görsel sıkıştırılamadı, orijinal dosya kullanılacak.', e);
+    return file;
+  }
+}
+
 let products = [];
 let editingId = null;
 let existingImages = [];   // düzenlenen üründe zaten kayıtlı olan, silinmemiş görsel URL'leri
@@ -136,7 +197,7 @@ function renderAdminList() {
         ${productThumbnailHtml(p, 'w-7 h-7')}
       </div>
       <div class="flex-1 min-w-0">
-        <p class="font-display text-walnut truncate">${p.title}</p>
+        <p class="font-display text-walnut truncate">${escapeHTML(p.title)}</p>
         <p class="text-xs text-walnutlight/70">${p.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'} · ${formatPrice(p.price)}</p>
       </div>
       <a href="detay.html?id=${encodeURIComponent(p.id)}" target="_blank" class="text-sm border border-walnut/20 text-walnut px-3 py-1.5 rounded-full hover:border-clay hover:text-clay transition-colors">Görüntüle</a>
@@ -211,16 +272,18 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
 
   const uploadedUrls = [];
   if (pendingFiles.length > 0) {
-    submitBtn.textContent = `Görseller yükleniyor (0/${pendingFiles.length})...`;
+    submitBtn.textContent = `Görseller işleniyor (0/${pendingFiles.length})...`;
     for (let i = 0; i < pendingFiles.length; i++) {
       const file = pendingFiles[i];
       if (file.size > 5 * 1024 * 1024) {
         alert(`"${file.name}" 5 MB'tan büyük olduğu için atlandı.`);
         continue;
       }
-      const url = await uploadProductImage(file, newId);
+      submitBtn.textContent = `Görsel sıkıştırılıyor (${i + 1}/${pendingFiles.length})...`;
+      const compressed = await compressImage(file);
+      submitBtn.textContent = `Görsel yükleniyor (${i + 1}/${pendingFiles.length})...`;
+      const url = await uploadProductImage(compressed, newId);
       if (url) uploadedUrls.push(url);
-      submitBtn.textContent = `Görseller yükleniyor (${i + 1}/${pendingFiles.length})...`;
     }
   }
 
