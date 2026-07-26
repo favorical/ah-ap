@@ -1,50 +1,73 @@
 /* =========================================================
    MEŞE ATÖLYE — admin.html'e özel mantık
    products.js'in bu dosyadan ÖNCE yüklenmiş olması gerekir.
+   Giriş, Supabase Auth (e-posta + şifre) üzerinden yapılır.
+   Yönetici hesabı: Supabase Dashboard → Authentication → Users
    ========================================================= */
 
-const ADMIN_PASSCODE = 'atolye2026';
-
-let products = loadProducts();
+let products = [];
 let editingId = null;
-let isAdmin = false;
 
 const adminLoginForm = document.getElementById('adminLoginForm');
 const adminLoginBox = document.getElementById('adminLogin');
 const adminPanel = document.getElementById('adminPanel');
 const adminLoginError = document.getElementById('adminLoginError');
 
-function renderAdmin() {
-  if (isAdmin) {
-    adminLoginBox.classList.add('hidden');
-    adminPanel.classList.remove('hidden');
-    resetForm();
-    renderAdminList();
+function showLogin() {
+  adminLoginBox.classList.remove('hidden');
+  adminPanel.classList.add('hidden');
+}
+
+async function showPanel() {
+  adminLoginBox.classList.add('hidden');
+  adminPanel.classList.remove('hidden');
+  resetForm();
+  products = await fetchProducts();
+  renderAdminList();
+}
+
+/* ---- Oturum kontrolü (sayfa her açıldığında) ---- */
+async function checkSession() {
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (session) {
+    await showPanel();
   } else {
-    adminLoginBox.classList.remove('hidden');
-    adminPanel.classList.add('hidden');
+    showLogin();
   }
 }
 
-adminLoginForm.addEventListener('submit', (e) => {
+/* ---- Giriş formu ---- */
+adminLoginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const val = document.getElementById('adminPasscode').value;
-  if (val === ADMIN_PASSCODE) {
-    isAdmin = true;
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPasscode').value;
+  const submitBtn = adminLoginForm.querySelector('button[type="submit"]');
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Giriş yapılıyor...';
+
+  const { error } = await sbClient.auth.signInWithPassword({ email, password });
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Giriş Yap';
+
+  if (error) {
+    adminLoginError.textContent = 'E-posta veya şifre hatalı.';
+    adminLoginError.classList.remove('hidden');
+  } else {
     adminLoginError.classList.add('hidden');
     document.getElementById('adminPasscode').value = '';
-    products = loadProducts(); // en güncel veriyi çek
-    renderAdmin();
-  } else {
-    adminLoginError.classList.remove('hidden');
+    await showPanel();
   }
 });
 
-document.getElementById('adminLogoutBtn').addEventListener('click', () => {
-  isAdmin = false;
-  renderAdmin();
+/* ---- Çıkış ---- */
+document.getElementById('adminLogoutBtn').addEventListener('click', async () => {
+  await sbClient.auth.signOut();
+  showLogin();
 });
 
+/* ---- Ürün listesi ---- */
 function renderAdminList() {
   const list = document.getElementById('adminProductList');
   document.getElementById('adminCount').textContent = products.length;
@@ -106,8 +129,13 @@ function startEdit(id) {
 
 document.getElementById('formCancelBtn').addEventListener('click', resetForm);
 
-document.getElementById('productForm').addEventListener('submit', (e) => {
+/* ---- Ürün ekle / güncelle ---- */
+document.getElementById('productForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const submitBtn = document.getElementById('formSubmitBtn');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Kaydediliyor...';
 
   const title = document.getElementById('f-title').value.trim();
   const data = {
@@ -120,30 +148,38 @@ document.getElementById('productForm').addEventListener('submit', (e) => {
     specs: document.getElementById('f-specs').value.split(',').map(s => s.trim()).filter(Boolean)
   };
 
+  let ok;
   if (editingId) {
-    const idx = products.findIndex(p => p.id === editingId);
-    if (idx > -1) products[idx] = { ...products[idx], ...data };
+    ok = await updateProductById(editingId, data);
   } else {
     let id = slugify(title) || ('urun-' + Date.now());
     if (products.some(p => p.id === id)) id += '-' + Date.now().toString(36).slice(-4);
-    products.push({ id, ...data });
+    data.id = id;
+    ok = await insertProduct(data);
   }
 
-  const ok = saveProducts(products);
+  submitBtn.disabled = false;
+  submitBtn.textContent = originalText;
+
   if (ok) {
+    products = await fetchProducts();
     resetForm();
     renderAdminList();
   }
 });
 
-function deleteProduct(id) {
+/* ---- Ürün sil ---- */
+async function deleteProduct(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
   if (!confirm(`"${p.title}" ürününü silmek istediğinize emin misiniz?`)) return;
-  products = products.filter(x => x.id !== id);
-  const ok = saveProducts(products);
-  if (ok) renderAdminList();
+
+  const ok = await deleteProductById(id);
+  if (ok) {
+    products = await fetchProducts();
+    renderAdminList();
+  }
 }
 
 /* ---- Başlangıç ---- */
-renderAdmin();
+checkSession();
