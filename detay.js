@@ -57,8 +57,8 @@ async function init() {
 
   content.innerHTML = `
     <div class="grid md:grid-cols-2 gap-12 items-start">
-      <div class="grain-bg bg-cream rounded-2xl border border-walnut/10 h-80 md:h-[420px] flex items-center justify-center">
-        ${iconSvg(product.icon, 'w-32 h-32')}
+      <div class="${product.imageUrl ? 'bg-cream' : 'grain-bg bg-cream'} rounded-2xl border border-walnut/10 h-80 md:h-[420px] flex items-center justify-center overflow-hidden">
+        ${productVisualHtml(product, 'w-32 h-32')}
       </div>
       <div>
         <span class="text-xs uppercase tracking-widest text-sage font-medium">${product.category === 'mobilya' ? 'Mobilya' : 'Hediyelik Eşya'}</span>
@@ -82,8 +82,8 @@ async function init() {
       <div class="grid sm:grid-cols-3 gap-6">
         ${relatedItems.map(p => `
           <a href="detay.html?id=${encodeURIComponent(p.id)}" class="card-lift block bg-paper border border-walnut/10 rounded-2xl overflow-hidden">
-            <div class="h-32 grain-bg bg-cream flex items-center justify-center border-b border-walnut/10">
-              ${iconSvg(p.icon, 'w-10 h-10')}
+            <div class="h-32 ${p.imageUrl ? 'bg-cream' : 'grain-bg bg-cream'} flex items-center justify-center border-b border-walnut/10 overflow-hidden">
+              ${productVisualHtml(p, 'w-10 h-10')}
             </div>
             <div class="p-4">
               <h3 class="font-display text-base text-walnut mb-1">${p.title}</h3>
