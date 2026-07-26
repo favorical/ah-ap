@@ -43,7 +43,7 @@ function rowToProduct(row) {
     category: row.category,
     price: row.price,
     icon: row.icon,
-    imageUrl: row.image_url || null,
+    images: row.image_urls || [],
     shortDesc: row.short_desc,
     longDesc: row.long_desc,
     specs: row.specs || []
@@ -56,19 +56,80 @@ function productToRow(product) {
     category: product.category,
     price: product.price,
     icon: product.icon,
-    image_url: product.imageUrl || null,
+    image_urls: product.images || [],
     short_desc: product.shortDesc,
     long_desc: product.longDesc,
     specs: product.specs || []
   };
 }
 
-/** Ürün görselini (varsa) veya ikonunu gösteren HTML döner. */
-function productVisualHtml(p, iconSizeClass) {
-  if (p.imageUrl) {
-    return `<img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy">`;
+/** Sadece ilk görseli (ya da yoksa ikonu) gösteren basit HTML — küçük thumbnail'ler için. */
+function productThumbnailHtml(p, iconSizeClass) {
+  const first = (p.images && p.images[0]) || null;
+  if (first) {
+    return `<img src="${first}" alt="${p.title}" class="w-full h-full object-cover" loading="lazy">`;
   }
   return iconSvg(p.icon, iconSizeClass);
+}
+
+/**
+ * Ürün için ana görsel alanını oluşturur: birden fazla görsel varsa
+ * ok butonlu + noktalı bir carousel, tek görsel varsa düz görsel,
+ * hiç görsel yoksa ikon döner.
+ * Dönen { html, images } değerindeki images.length > 1 ise, DOM'a
+ * eklendikten sonra attachCarouselHandlers(container) çağrılmalıdır.
+ */
+function renderProductVisual(p, iconSizeClass) {
+  const images = p.images || [];
+
+  if (images.length === 0) {
+    return { html: iconSvg(p.icon, iconSizeClass), images: [] };
+  }
+
+  const dots = images.length > 1
+    ? `<div class="carousel-dots absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">${images.map((_, i) => `<span class="w-1.5 h-1.5 rounded-full transition-colors ${i === 0 ? 'bg-white' : 'bg-white/40'}"></span>`).join('')}</div>`
+    : '';
+
+  const arrows = images.length > 1 ? `
+    <button type="button" class="carousel-prev absolute left-2 top-1/2 -translate-y-1/2 bg-ink/50 hover:bg-ink/75 text-white w-7 h-7 rounded-full flex items-center justify-center z-10 transition-colors" aria-label="Önceki görsel">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button type="button" class="carousel-next absolute right-2 top-1/2 -translate-y-1/2 bg-ink/50 hover:bg-ink/75 text-white w-7 h-7 rounded-full flex items-center justify-center z-10 transition-colors" aria-label="Sonraki görsel">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>` : '';
+
+  const html = `
+    <div class="product-carousel relative w-full h-full">
+      <img data-carousel-img src="${images[0]}" alt="${p.title}" class="w-full h-full object-cover">
+      ${arrows}
+      ${dots}
+    </div>`;
+
+  return { html, images };
+}
+
+/** renderProductVisual ile oluşturulan bir carousel'e ok/nokta olaylarını bağlar. */
+function attachCarouselHandlers(container, images) {
+  const carousel = container.querySelector('.product-carousel');
+  if (!carousel || images.length < 2) return;
+
+  let index = 0;
+  const imgEl = carousel.querySelector('[data-carousel-img]');
+  const dots = carousel.querySelectorAll('.carousel-dots span');
+
+  function show(i) {
+    index = (i + images.length) % images.length;
+    imgEl.src = images[index];
+    dots.forEach((d, di) => {
+      d.classList.toggle('bg-white', di === index);
+      d.classList.toggle('bg-white/40', di !== index);
+    });
+  }
+
+  const prevBtn = carousel.querySelector('.carousel-prev');
+  const nextBtn = carousel.querySelector('.carousel-next');
+  if (prevBtn) prevBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); show(index - 1); });
+  if (nextBtn) nextBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); show(index + 1); });
 }
 
 /**
@@ -78,7 +139,7 @@ function productVisualHtml(p, iconSizeClass) {
 async function uploadProductImage(file, idHint) {
   try {
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `${idHint || 'urun'}-${Date.now()}.${ext}`;
+    const path = `${idHint || 'urun'}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const { error: uploadError } = await sbClient
       .storage
       .from('product-images')
