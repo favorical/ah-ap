@@ -81,7 +81,16 @@ async function init() {
         <p class="text-walnutlight leading-relaxed mb-6">${escapeHTML(product.shortDesc)}</p>
         ${product.longDesc ? `<p class="text-walnutlight leading-relaxed mb-6">${escapeHTML(product.longDesc)}</p>` : ''}
         ${specsHtml ? `<ul class="flex flex-col gap-2 mb-8">${specsHtml}</ul>` : ''}
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-sm text-walnutlight">Adet</span>
+          <div class="flex items-center gap-2">
+            <button type="button" id="qtyDecrease" class="w-8 h-8 rounded-full border border-walnut/20 text-walnut hover:border-clay hover:text-clay transition-colors">−</button>
+            <span id="qtyValue" class="w-6 text-center">1</span>
+            <button type="button" id="qtyIncrease" class="w-8 h-8 rounded-full border border-walnut/20 text-walnut hover:border-clay hover:text-clay transition-colors">+</button>
+          </div>
+        </div>
         <div class="flex flex-col sm:flex-row gap-3">
+          <button type="button" id="addToCartBtn" class="bg-walnut text-paper text-center px-6 py-3.5 rounded-full font-medium hover:bg-sagedark transition-colors">Sepete Ekle</button>
           <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-center px-6 py-3.5 rounded-full font-medium hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
           <a href="index.html#urunler" class="border border-walnut/25 text-walnut text-center px-6 py-3.5 rounded-full font-medium hover:border-clay hover:text-clay transition-colors">Diğer Ürünlere Dön</a>
         </div>
@@ -89,6 +98,20 @@ async function init() {
     </div>
   `;
   attachCarouselHandlers(content, visual.images);
+
+  let qty = 1;
+  const qtyValueEl = document.getElementById('qtyValue');
+  document.getElementById('qtyDecrease').addEventListener('click', () => {
+    qty = Math.max(1, qty - 1);
+    qtyValueEl.textContent = qty;
+  });
+  document.getElementById('qtyIncrease').addEventListener('click', () => {
+    qty += 1;
+    qtyValueEl.textContent = qty;
+  });
+  document.getElementById('addToCartBtn').addEventListener('click', () => {
+    addToCart(product, qty);
+  });
 
   const relatedItems = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3);
   if (relatedItems.length > 0) {
