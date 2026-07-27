@@ -30,16 +30,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  tailwind.config = {
-    theme: { extend: {
-      colors: { cream:'#EDE4D3', paper:'#F7F1E6', walnut:'#3B2A1E', walnutlight:'#5A4230', clay:'#8B5E3C', sage:'#6B7A5E', sagedark:'#4A5641', gold:'#B8912F', ink:'#2A211B', danger:'#A3453A' },
-      fontFamily: { display:['Fraunces','serif'], body:['Work Sans','sans-serif'] }
-    } }
-  }
-</script>
+<!-- Tailwind CSS artık CDN'den değil, derlenmiş/minified production dosyasından geliyor.
+     Not: Markup'ta yeni bir Tailwind class'ı kullanırsanız `npm run build:css`
+     komutunu tekrar çalıştırmanız gerekir (bkz. BUILD_TALIMATLARI.md). -->
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="font-body text-ink antialiased">
@@ -59,7 +53,11 @@
       <a href="#iletisim" class="hover:text-clay transition-colors">İletişim</a>
     </nav>
 
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3">
+      <button id="cartToggleBtn" type="button" aria-label="Sepeti Aç" class="relative w-10 h-10 flex items-center justify-center text-walnut hover:text-clay transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l3-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m-10 0a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z"/></svg>
+        <span id="cartCount" class="hidden absolute -top-1 -right-1 bg-clay text-white text-[10px] font-medium w-4 h-4 rounded-full flex items-center justify-center">0</span>
+      </button>
       <a href="#urunler" class="hidden sm:inline-block bg-walnut text-paper text-sm font-medium px-5 py-2.5 rounded-full hover:bg-sagedark transition-colors">Sipariş Ver</a>
       <button id="menuBtn" class="md:hidden text-walnut" aria-label="Menüyü aç">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -150,6 +148,9 @@
 
   <div id="productGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[160px]">
     <div class="col-span-full flex justify-center py-14"><div class="spinner"></div></div>
+  </div>
+  <div id="loadMoreWrap" class="hidden mt-10 text-center">
+    <button id="loadMoreBtn" type="button" class="border border-walnut/25 text-walnut px-8 py-3 rounded-full font-medium hover:border-clay hover:text-clay transition-colors disabled:opacity-50">Daha Fazla Yükle</button>
   </div>
 </section>
 
