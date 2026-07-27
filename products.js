@@ -196,7 +196,7 @@ async function uploadProductImage(file, idHint) {
 
     if (uploadError) {
       console.error('Görsel yüklenemedi:', uploadError);
-      alert('Görsel yüklenemedi: ' + uploadError.message);
+      showToast('Görsel yüklenemedi: ' + uploadError.message, 'error');
       return null;
     }
 
@@ -204,12 +204,12 @@ async function uploadProductImage(file, idHint) {
     return data.publicUrl;
   } catch (e) {
     console.error('Görsel yükleme hatası:', e);
-    alert('Görsel yüklenirken beklenmeyen bir hata oluştu.');
+    showToast('Görsel yüklenirken beklenmeyen bir hata oluştu.', 'error');
     return null;
   }
 }
 
-/** Tüm ürünleri Supabase'den çeker. */
+/** Tüm ürünleri Supabase'den çeker. (Admin paneli ve "benzer ürünler" için.) */
 async function fetchProducts() {
   const { data, error } = await sbClient
     .from('products')
@@ -218,7 +218,52 @@ async function fetchProducts() {
 
   if (error) {
     console.error('Ürünler alınamadı:', error);
-    alert('Ürünler yüklenirken bir hata oluştu: ' + error.message);
+    showToast('Ürünler yüklenirken bir hata oluştu: ' + error.message, 'error');
+    return [];
+  }
+  return (data || []).map(rowToProduct);
+}
+
+/**
+ * Ürünleri sayfalayarak (pagination) çeker — vitrin/kategori sayfaları için.
+ * Ürün sayısı arttıkça tüm kataloğu tek seferde çekmek yerine bu kullanılmalı.
+ */
+async function fetchProductsPage({ offset = 0, limit = 12, category = 'all' } = {}) {
+  let query = sbClient
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .range(offset, offset + limit - 1);
+
+  if (category !== 'all') query = query.eq('category', category);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('Ürünler alınamadı:', error);
+    showToast('Ürünler yüklenirken bir hata oluştu: ' + error.message, 'error');
+    return [];
+  }
+  return (data || []).map(rowToProduct);
+}
+
+/** Başlık/kısa açıklamada arama yapar — sunucu tarafında (Supabase ILIKE) çalışır. */
+async function searchProductsRemote(searchTerm, category = 'all') {
+  // .or() filtresinin sözdizimini bozabilecek karakterleri (virgül, parantez) temizle
+  const safeTerm = searchTerm.replace(/[,()]/g, ' ').trim();
+  if (!safeTerm) return [];
+
+  let query = sbClient
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .or(`title.ilike.%${safeTerm}%,short_desc.ilike.%${safeTerm}%`);
+
+  if (category !== 'all') query = query.eq('category', category);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('Arama başarısız:', error);
+    showToast('Arama sırasında bir hata oluştu: ' + error.message, 'error');
     return [];
   }
   return (data || []).map(rowToProduct);
@@ -245,9 +290,10 @@ async function insertProduct(product) {
   const { error } = await sbClient.from('products').insert(row);
   if (error) {
     console.error('Ürün eklenemedi:', error);
-    alert('Ürün eklenemedi: ' + error.message);
+    showToast('Ürün eklenemedi: ' + error.message, 'error');
     return false;
   }
+  showToast('Ürün başarıyla eklendi.', 'success');
   return true;
 }
 
@@ -257,9 +303,10 @@ async function updateProductById(id, product) {
   const { error } = await sbClient.from('products').update(row).eq('id', id);
   if (error) {
     console.error('Ürün güncellenemedi:', error);
-    alert('Ürün güncellenemedi: ' + error.message);
+    showToast('Ürün güncellenemedi: ' + error.message, 'error');
     return false;
   }
+  showToast('Ürün başarıyla güncellendi.', 'success');
   return true;
 }
 
@@ -268,9 +315,10 @@ async function deleteProductById(id) {
   const { error } = await sbClient.from('products').delete().eq('id', id);
   if (error) {
     console.error('Ürün silinemedi:', error);
-    alert('Ürün silinemedi: ' + error.message);
+    showToast('Ürün silinemedi: ' + error.message, 'error');
     return false;
   }
+  showToast('Ürün silindi.', 'success');
   return true;
 }
 
@@ -472,3 +520,234 @@ function closeLightbox() {
   overlay.classList.remove('flex');
   document.body.style.overflow = '';
 }
+
+/* =========================================================
+   TOAST BİLDİRİMLERİ
+   alert()/confirm() yerine ekranın sağ üstünde belirip
+   kendiliğinden kaybolan, akışı bloke etmeyen bildirimler.
+   ========================================================= */
+
+function showToast(message, type = 'info') {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'fixed top-5 right-5 z-[1000] flex flex-col gap-2 items-end pointer-events-none';
+    document.body.appendChild(container);
+  }
+
+  const styles = {
+    success: 'bg-sage text-white',
+    error: 'bg-danger text-white',
+    info: 'bg-walnut text-paper'
+  };
+
+  const toast = document.createElement('div');
+  toast.className = `toast-enter ${styles[type] || styles.info} px-4 py-3 rounded-xl shadow-lg text-sm max-w-xs pointer-events-auto`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => toast.classList.add('toast-visible'));
+
+  setTimeout(() => {
+    toast.classList.remove('toast-visible');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    setTimeout(() => toast.remove(), 500); // transitionend tetiklenmezse yedek temizlik
+  }, 3500);
+}
+
+/* =========================================================
+   SEPET (localStorage tabanlı — gerçek bir web sitesi olduğu
+   için burada localStorage kullanmak doğru ve standart yaklaşımdır)
+   Ödeme altyapısı içermez; sepet içeriği tek bir WhatsApp
+   mesajına dönüştürülüp atölyeye gönderilir.
+   ========================================================= */
+
+const CART_STORAGE_KEY = 'mese-atolye-cart';
+
+function getCart() {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn('Sepet okunamadı.', e);
+    return [];
+  }
+}
+
+function saveCart(cart) {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  } catch (e) {
+    console.warn('Sepet kaydedilemedi.', e);
+  }
+  updateCartBadge();
+}
+
+function addToCart(product, qty = 1) {
+  const cart = getCart();
+  const existing = cart.find(item => item.id === product.id);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: (product.images && product.images[0]) || null,
+      icon: product.icon,
+      qty
+    });
+  }
+  saveCart(cart);
+  renderCartDrawer();
+  showToast(`"${product.title}" sepete eklendi.`, 'success');
+}
+
+function removeFromCart(id) {
+  saveCart(getCart().filter(i => i.id !== id));
+  renderCartDrawer();
+}
+
+function updateCartQty(id, qty) {
+  const cart = getCart();
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, qty);
+  saveCart(cart);
+  renderCartDrawer();
+}
+
+function getCartCount() {
+  return getCart().reduce((sum, i) => sum + i.qty, 0);
+}
+
+function getCartTotal(cart) {
+  return cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+}
+
+function updateCartBadge() {
+  const badge = document.getElementById('cartCount');
+  if (!badge) return;
+  const count = getCartCount();
+  badge.textContent = count;
+  badge.classList.toggle('hidden', count === 0);
+}
+
+function initCartUI() {
+  if (document.getElementById('cartDrawer')) {
+    updateCartBadge();
+    return;
+  }
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="cartOverlay" class="fixed inset-0 z-[998] bg-ink/50 hidden"></div>
+    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-paper z-[999] shadow-2xl translate-x-full transition-transform duration-300 flex flex-col">
+      <div class="flex items-center justify-between px-6 py-5 border-b border-walnut/10">
+        <h2 class="font-display text-xl text-walnut">Sepetiniz</h2>
+        <button id="cartCloseBtn" type="button" aria-label="Kapat" class="text-walnut/60 hover:text-walnut w-8 h-8 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="cartItemsWrap" class="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4"></div>
+      <div class="border-t border-walnut/10 px-6 py-5">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-walnutlight text-sm">Toplam</span>
+          <span id="cartTotal" class="font-display text-xl text-clay">0 ₺</span>
+        </div>
+        <button id="cartCheckoutBtn" type="button" class="w-full bg-[#25D366] text-white font-medium py-3 rounded-full hover:brightness-95 transition-colors">WhatsApp'tan Sipariş Ver</button>
+      </div>
+    </aside>
+  `);
+
+  document.getElementById('cartCloseBtn').addEventListener('click', closeCart);
+  document.getElementById('cartOverlay').addEventListener('click', closeCart);
+  document.getElementById('cartCheckoutBtn').addEventListener('click', checkoutViaWhatsApp);
+
+  const toggleBtn = document.getElementById('cartToggleBtn');
+  if (toggleBtn) toggleBtn.addEventListener('click', openCart);
+
+  updateCartBadge();
+}
+
+function openCart() {
+  initCartUI();
+  renderCartDrawer();
+  document.getElementById('cartOverlay').classList.remove('hidden');
+  document.getElementById('cartDrawer').classList.remove('translate-x-full');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+  const overlay = document.getElementById('cartOverlay');
+  const drawer = document.getElementById('cartDrawer');
+  if (!overlay || !drawer) return;
+  overlay.classList.add('hidden');
+  drawer.classList.add('translate-x-full');
+  document.body.style.overflow = '';
+}
+
+function renderCartDrawer() {
+  const wrap = document.getElementById('cartItemsWrap');
+  if (!wrap) return;
+  const cart = getCart();
+
+  if (cart.length === 0) {
+    wrap.innerHTML = '<p class="text-walnutlight text-sm text-center py-10">Sepetiniz boş.</p>';
+  } else {
+    wrap.innerHTML = cart.map(item => {
+      const visual = item.image
+        ? `<img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}" class="w-full h-full object-cover">`
+        : iconSvg(item.icon, 'w-7 h-7');
+      return `
+        <div class="flex gap-3 items-center" data-cart-id="${escapeHTML(item.id)}">
+          <div class="w-16 h-16 rounded-lg bg-cream overflow-hidden flex items-center justify-center shrink-0">${visual}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-walnut truncate">${escapeHTML(item.title)}</p>
+            <p class="text-xs text-walnutlight">${formatPrice(item.price)}</p>
+            <div class="flex items-center gap-2 mt-1">
+              <button type="button" class="cart-qty-decrease w-6 h-6 rounded-full border border-walnut/20 text-walnut hover:border-clay hover:text-clay transition-colors">−</button>
+              <span class="text-sm w-5 text-center">${item.qty}</span>
+              <button type="button" class="cart-qty-increase w-6 h-6 rounded-full border border-walnut/20 text-walnut hover:border-clay hover:text-clay transition-colors">+</button>
+            </div>
+          </div>
+          <button type="button" class="cart-remove-btn text-danger text-xs underline underline-offset-2 shrink-0">Kaldır</button>
+        </div>`;
+    }).join('');
+
+    wrap.querySelectorAll('[data-cart-id]').forEach(row => {
+      const id = row.dataset.cartId;
+      row.querySelector('.cart-qty-decrease').addEventListener('click', () => {
+        const item = getCart().find(i => i.id === id);
+        if (!item) return;
+        if (item.qty - 1 <= 0) removeFromCart(id);
+        else updateCartQty(id, item.qty - 1);
+      });
+      row.querySelector('.cart-qty-increase').addEventListener('click', () => {
+        const item = getCart().find(i => i.id === id);
+        if (item) updateCartQty(id, item.qty + 1);
+      });
+      row.querySelector('.cart-remove-btn').addEventListener('click', () => removeFromCart(id));
+    });
+  }
+
+  document.getElementById('cartTotal').textContent = formatPrice(getCartTotal(cart));
+  updateCartBadge();
+}
+
+function checkoutViaWhatsApp() {
+  const cart = getCart();
+  if (cart.length === 0) {
+    showToast('Sepetiniz boş.', 'error');
+    return;
+  }
+  const lines = cart.map(item => `• ${item.title} x${item.qty} — ${formatPrice(item.price * item.qty)}`);
+  const total = formatPrice(getCartTotal(cart));
+  const message = `Merhaba, aşağıdaki ürünleri sipariş etmek istiyorum:\n\n${lines.join('\n')}\n\nToplam: ${total}`;
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+}
+
+/* Her sayfa yüklendiğinde sepet rozetini (badge) güncel tut. */
+document.addEventListener('DOMContentLoaded', () => {
+  initCartUI();
+});
