@@ -3,9 +3,15 @@
    products.js'in bu dosyadan ÖNCE yüklenmiş olması gerekir.
    ========================================================= */
 
-let allProducts = [];
+const PAGE_SIZE = 12;
+
 let currentFilter = 'all';
 let searchQuery = '';
+let loadedProducts = [];
+let pageOffset = 0;
+let hasMorePages = true;
+let isLoadingMore = false;
+let searchDebounceTimer = null;
 
 /* ---- Mobil menü ---- */
 const menuBtn = document.getElementById('menuBtn');
@@ -15,24 +21,18 @@ mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => 
 
 /* ---- Ürün ızgarası ---- */
 const grid = document.getElementById('productGrid');
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+const loadMoreWrap = document.getElementById('loadMoreWrap');
 
 function renderProductGrid() {
-  const q = searchQuery.trim().toLocaleLowerCase('tr');
-  const items = allProducts.filter(p => {
-    const matchesCategory = currentFilter === 'all' || p.category === currentFilter;
-    const matchesQuery = !q ||
-      p.title.toLocaleLowerCase('tr').includes(q) ||
-      (p.shortDesc || '').toLocaleLowerCase('tr').includes(q);
-    return matchesCategory && matchesQuery;
-  });
   grid.innerHTML = '';
 
-  if (items.length === 0) {
-    grid.innerHTML = `<p class="col-span-full text-center text-walnutlight py-10">${q ? 'Aramanızla eşleşen ürün bulunamadı.' : 'Bu kategoride henüz ürün yok.'}</p>`;
+  if (loadedProducts.length === 0) {
+    grid.innerHTML = `<p class="col-span-full text-center text-walnutlight py-10">${searchQuery.trim() ? 'Aramanızla eşleşen ürün bulunamadı.' : 'Bu kategoride henüz ürün yok.'}</p>`;
     return;
   }
 
-  items.forEach(p => {
+  loadedProducts.forEach(p => {
     const waMsg = encodeURIComponent(`Merhaba, "${p.title}" ürünü hakkında bilgi almak istiyorum.`);
     const visual = renderProductVisual(p, 'w-16 h-16');
     const card = document.createElement('article');
@@ -48,15 +48,60 @@ function renderProductGrid() {
         <div class="flex items-center justify-between mt-5 mb-4">
           <span class="font-display text-lg text-clay">${formatPrice(p.price)}</span>
         </div>
-        <div class="flex flex-col gap-2">
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" class="add-to-cart-btn bg-walnut text-paper text-sm font-medium text-center py-2.5 rounded-full hover:bg-sagedark transition-colors">Sepete Ekle</button>
           <a href="detay.html?id=${encodeURIComponent(p.id)}" class="border border-walnut/25 text-walnut text-sm font-medium text-center py-2.5 rounded-full hover:border-clay hover:text-clay transition-colors">Detaylı İncele</a>
-          <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-sm font-medium text-center py-2.5 rounded-full hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
         </div>
+        <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="mt-2 bg-[#25D366] text-white text-sm font-medium text-center py-2.5 rounded-full hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
       </div>
     `;
+    card.querySelector('.add-to-cart-btn').addEventListener('click', () => addToCart(p));
     grid.appendChild(card);
     attachCarouselHandlers(card, visual.images);
   });
+}
+
+function updateLoadMoreUI() {
+  const searching = searchQuery.trim().length > 0;
+  if (searching || !hasMorePages) {
+    loadMoreWrap.classList.add('hidden');
+    return;
+  }
+  loadMoreWrap.classList.remove('hidden');
+  loadMoreBtn.disabled = isLoadingMore;
+  loadMoreBtn.textContent = isLoadingMore ? 'Yükleniyor...' : 'Daha Fazla Yükle';
+}
+
+async function loadAndRender(reset) {
+  if (reset) {
+    pageOffset = 0;
+    loadedProducts = [];
+    hasMorePages = true;
+  }
+  if (isLoadingMore || (!hasMorePages && !reset)) return;
+
+  isLoadingMore = true;
+  updateLoadMoreUI();
+  if (reset) {
+    grid.innerHTML = '<div class="col-span-full flex justify-center py-14"><div class="spinner"></div></div>';
+  }
+
+  const q = searchQuery.trim();
+
+  if (q) {
+    // Arama sonuçları sunucu tarafında (Supabase ILIKE) tek seferde getirilir.
+    loadedProducts = await searchProductsRemote(q, currentFilter);
+    hasMorePages = false;
+  } else {
+    const newItems = await fetchProductsPage({ offset: pageOffset, limit: PAGE_SIZE, category: currentFilter });
+    loadedProducts = reset ? newItems : [...loadedProducts, ...newItems];
+    pageOffset += PAGE_SIZE;
+    hasMorePages = newItems.length === PAGE_SIZE;
+  }
+
+  isLoadingMore = false;
+  renderProductGrid();
+  updateLoadMoreUI();
 }
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -64,11 +109,13 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentFilter = btn.dataset.filter;
-    renderProductGrid();
+    loadAndRender(true);
   });
 });
 
-/* ---- Canlı arama ---- */
+loadMoreBtn.addEventListener('click', () => loadAndRender(false));
+
+/* ---- Canlı arama (300ms gecikmeli — her tuş vuruşunda sunucuya gitmesin) ---- */
 const searchInput = document.getElementById('searchInput');
 const searchClearBtn = document.getElementById('searchClear');
 
@@ -76,15 +123,17 @@ if (searchInput) {
   searchInput.addEventListener('input', () => {
     searchQuery = searchInput.value;
     searchClearBtn.classList.toggle('hidden', searchQuery.length === 0);
-    renderProductGrid();
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => loadAndRender(true), 300);
   });
 
   searchClearBtn.addEventListener('click', () => {
+    clearTimeout(searchDebounceTimer);
     searchQuery = '';
     searchInput.value = '';
     searchClearBtn.classList.add('hidden');
     searchInput.focus();
-    renderProductGrid();
+    loadAndRender(true);
   });
 }
 
@@ -100,7 +149,4 @@ const io = new IntersectionObserver((entries) => {
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 /* ---- Başlangıç ---- */
-(async function init() {
-  allProducts = await fetchProducts();
-  renderProductGrid();
-})();
+loadAndRender(true);
