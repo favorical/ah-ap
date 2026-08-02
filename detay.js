@@ -93,11 +93,14 @@
               <button type="button" id="qtyIncrease" class="w-8 h-8 rounded-full border border-walnut/20 text-walnut hover:border-clay hover:text-clay transition-colors">+</button>
             </div>
           </div>
-          <div class="flex flex-col sm:flex-row gap-3">
-            <button type="button" id="addToCartBtn" class="bg-walnut text-paper text-center px-6 py-3.5 rounded-full font-medium hover:bg-sagedark transition-colors">Sepete Ekle</button>
-            <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-center px-6 py-3.5 rounded-full font-medium hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
-            <a href="index.html#urunler" class="border border-walnut/25 text-walnut text-center px-6 py-3.5 rounded-full font-medium hover:border-clay hover:text-clay transition-colors">Diğer Ürünlere Dön</a>
+          <div class="flex flex-col sm:flex-row gap-3 mb-3">
+            <button type="button" id="addToCartBtn" class="flex-1 bg-walnut text-paper text-center px-6 py-3.5 rounded-xl font-medium hover:bg-sagedark transition-colors">Sepete Ekle</button>
+            <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}" target="_blank" rel="noopener" class="flex-1 bg-[#25D366] text-white text-center px-6 py-3.5 rounded-xl font-medium hover:brightness-95 transition">WhatsApp'tan Sipariş Et</a>
           </div>
+          <a href="index.html#urunler" class="inline-flex items-center gap-1 text-sm text-walnutlight hover:text-clay transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Diğer ürünlere dön
+          </a>
         </div>
       </div>
     `;
