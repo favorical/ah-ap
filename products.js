@@ -1,8 +1,9 @@
 /* =========================================================
-   MEŞE ATÖLYE — Ortak Veri Katmanı (Supabase)
+   KILIÇARSLAN MOBİLYA — Ortak Veri Katmanı (Supabase)
    index.html, detay.html ve admin.html tarafından kullanılır.
-   Bu dosyadan ÖNCE Supabase CDN script'inin yüklenmiş olması gerekir:
+   Bu dosyadan ÖNCE şu script'lerin yüklenmiş olması gerekir:
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
    ========================================================= */
 
 const SUPABASE_URL = 'https://vmprdjqtllodupllhiol.supabase.co';
@@ -10,7 +11,11 @@ const SUPABASE_ANON_KEY = 'sb_publishable_wuk4zQJflaZfo3lkVb1a4w_bhwt6i56';
 
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const WHATSAPP_NUMBER = '905551112233';
+/* Tek doğru kaynak (single source of truth): WhatsApp numarası SADECE burada
+   tanımlanır. HTML'deki statik linkler data-wa-link ile işaretlenip
+   initStaticWhatsAppLinks() tarafından bu sabitten doldurulur; main.js/detay.js
+   içindeki dinamik linkler de doğrudan bu değişkeni kullanır. */
+const WHATSAPP_NUMBER = '905074560303';
 
 const icons = {
   table: '<path d="M4 8h16M6 8v10M18 8v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
@@ -36,21 +41,18 @@ function slugify(text) {
 }
 
 /**
- * Kullanıcı/admin tarafından girilen metinleri innerHTML içine
- * güvenli şekilde yerleştirmek için HTML özel karakterlerini escape eder.
- * XSS (Cross-Site Scripting) saldırılarına karşı birincil savunma hattıdır.
+ * Kullanıcı/admin tarafından girilen metinleri innerHTML içine güvenli
+ * şekilde yerleştirmek için endüstri standardı DOMPurify kütüphanesiyle
+ * temizler (sanitize). XSS (Cross-Site Scripting) saldırılarına karşı
+ * birincil savunma hattıdır. ALLOWED_TAGS/ALLOWED_ATTR boş bırakılarak
+ * tüm HTML etiketleri ve öznitelikleri kaldırılır, yalnızca düz metin kalır.
  * KURAL: Bir değişken template literal (`${...}`) içinde innerHTML'e
  * yazılıyorsa ve kullanıcı girdisi (ürün başlığı, açıklama, özellik vb.)
- * içeriyorsa MUTLAKA escapeHTML() ile sarmalanmalıdır.
+ * içeriyorsa MUTLAKA sanitizeText() ile sarmalanmalıdır.
  */
-function escapeHTML(value) {
+function sanitizeText(value) {
   if (value === null || value === undefined) return '';
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return DOMPurify.sanitize(String(value), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
 }
 
 /* ---- Supabase satırı <-> Uygulama ürün nesnesi dönüşümleri ---- */
@@ -85,7 +87,7 @@ function productToRow(product) {
 function productThumbnailHtml(p, iconSizeClass) {
   const first = (p.images && p.images[0]) || null;
   if (first) {
-    return `<img src="${escapeHTML(first)}" alt="${escapeHTML(p.title)}" class="w-full h-full object-cover" loading="lazy">`;
+    return `<img src="${sanitizeText(first)}" alt="${sanitizeText(p.title)}" class="w-full h-full object-cover" loading="lazy">`;
   }
   return iconSvg(p.icon, iconSizeClass);
 }
@@ -118,7 +120,7 @@ function renderProductVisual(p, iconSizeClass) {
 
   const html = `
     <div class="product-carousel relative w-full h-full">
-      <img data-carousel-img src="${escapeHTML(images[0])}" alt="${escapeHTML(p.title)}" class="w-full h-full object-cover">
+      <img data-carousel-img src="${sanitizeText(images[0])}" alt="${sanitizeText(p.title)}" class="w-full h-full object-cover" loading="lazy">
       ${arrows}
       ${dots}
     </div>`;
@@ -181,18 +183,82 @@ function attachCarouselHandlers(container, images) {
   }
 }
 
+/* =========================================================
+   GÖRSEL SIKIŞTIRMA (Canvas API)
+   uploadProductImage() tarafından otomatik olarak kullanılır.
+   Yüklenen görseller Supabase'e gönderilmeden önce tarayıcıda
+   sıkıştırılır: genişlik en fazla 1200px'e indirilir ve
+   %80 kalitede WebP formatına dönüştürülür.
+   ========================================================= */
+
+/** Bir File/Blob'u <img> ya da ImageBitmap olarak yükler (tarayıcı desteğine göre). */
+function loadImageSource(file) {
+  if (window.createImageBitmap) {
+    return createImageBitmap(file);
+  }
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => { resolve(img); URL.revokeObjectURL(url); };
+    img.onerror = (err) => { URL.revokeObjectURL(url); reject(err); };
+    img.src = url;
+  });
+}
+
 /**
- * Bir dosyayı 'product-images' bucket'ına yükler ve genel (public) URL'sini döner.
- * Hata olursa null döner ve kullanıcıya alert gösterir.
+ * Görseli en fazla maxWidth genişliğe küçültüp WebP'ye çevirir.
+ * Sıkıştırma başarısız olursa (ör. tarayıcı WebP desteklemiyorsa)
+ * orijinal dosyayı olduğu gibi döner — böylece yükleme hiçbir
+ * zaman tamamen başarısız olmaz.
+ */
+async function compressImage(file, maxWidth = 1200, quality = 0.8) {
+  try {
+    const source = await loadImageSource(file);
+    const sourceWidth = source.width;
+    const sourceHeight = source.height;
+
+    const scale = Math.min(1, maxWidth / sourceWidth);
+    const targetWidth = Math.round(sourceWidth * scale);
+    const targetHeight = Math.round(sourceHeight * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(source, 0, 0, targetWidth, targetHeight);
+
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob((b) => resolve(b), 'image/webp', quality);
+    });
+
+    if (!blob) {
+      console.warn('Tarayıcı WebP dönüşümünü desteklemiyor, orijinal dosya kullanılacak.');
+      return file;
+    }
+
+    const newName = file.name.replace(/\.[^./\\]+$/, '') + '.webp';
+    return new File([blob], newName, { type: 'image/webp' });
+  } catch (e) {
+    console.warn('Görsel sıkıştırılamadı, orijinal dosya kullanılacak.', e);
+    return file;
+  }
+}
+
+/**
+ * Bir görseli sıkıştırıp (Canvas API + WebP, bkz. compressImage) 'product-images'
+ * bucket'ına yükler ve genel (public) URL'sini döner. Sıkıştırma bu fonksiyonun
+ * içinde otomatik yapılır — çağıran kod (admin.js) bunu ayrıca yapmak zorunda
+ * değildir. Hata olursa null döner ve kullanıcıya toast bildirimi gösterir.
  */
 async function uploadProductImage(file, idHint) {
   try {
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const compressed = await compressImage(file);
+    const ext = (compressed.name.split('.').pop() || 'webp').toLowerCase();
     const path = `${idHint || 'urun'}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const { error: uploadError } = await sbClient
       .storage
       .from('product-images')
-      .upload(path, file, { upsert: true, cacheControl: '3600' });
+      .upload(path, compressed, { upsert: true, cacheControl: '3600' });
 
     if (uploadError) {
       console.error('Görsel yüklenemedi:', uploadError);
@@ -246,8 +312,12 @@ async function fetchProductsPage({ offset = 0, limit = 12, category = 'all' } = 
   return (data || []).map(rowToProduct);
 }
 
-/** Başlık/kısa açıklamada arama yapar — sunucu tarafında (Supabase ILIKE) çalışır. */
-async function searchProductsRemote(searchTerm, category = 'all') {
+/**
+ * Başlık/kısa açıklamada arama yapar — sunucu tarafında (Supabase ILIKE) çalışır.
+ * Performans için sonuçlar .range() ile sınırlandırılır (varsayılan: ilk 20 eşleşme);
+ * bu sayede geniş bir kataloğa karşı sınırsız bir sonuç kümesi dönmez.
+ */
+async function searchProductsRemote(searchTerm, category = 'all', { offset = 0, limit = 20 } = {}) {
   // .or() filtresinin sözdizimini bozabilecek karakterleri (virgül, parantez) temizle
   const safeTerm = searchTerm.replace(/[,()]/g, ' ').trim();
   if (!safeTerm) return [];
@@ -256,7 +326,8 @@ async function searchProductsRemote(searchTerm, category = 'all') {
     .from('products')
     .select('*')
     .order('created_at', { ascending: true })
-    .or(`title.ilike.%${safeTerm}%,short_desc.ilike.%${safeTerm}%`);
+    .or(`title.ilike.%${safeTerm}%,short_desc.ilike.%${safeTerm}%`)
+    .range(offset, offset + limit - 1);
 
   if (category !== 'all') query = query.eq('category', category);
 
@@ -323,6 +394,62 @@ async function deleteProductById(id) {
 }
 
 /* =========================================================
+   ERİŞİLEBİLİRLİK — Odak Hapsi (Focus Trapping)
+   Bir modal (sepet paneli, lightbox) açıkken Tab / Shift+Tab ile
+   klavye odağının arka plandaki elemanlara kaçmasını engeller.
+   Modal kapandığında odak, modalı açan elemana geri döner.
+   ========================================================= */
+
+let focusTrapLastFocusedEl = null;
+let focusTrapHandler = null;
+let focusTrapContainer = null;
+
+function getFocusableElements(container) {
+  return Array.from(container.querySelectorAll(
+    'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.offsetParent !== null);
+}
+
+/** Odağı container'ın içine hapseder; önceki odaklanmış elemanı hatırlar. */
+function trapFocus(container) {
+  releaseFocusTrap();
+  focusTrapLastFocusedEl = document.activeElement;
+  focusTrapContainer = container;
+
+  const focusables = getFocusableElements(container);
+  (focusables[0] || container).focus();
+
+  focusTrapHandler = (e) => {
+    if (e.key !== 'Tab') return;
+    const items = getFocusableElements(container);
+    if (items.length === 0) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+  container.addEventListener('keydown', focusTrapHandler);
+}
+
+/** Odak hapsini kaldırır ve odağı modalı açan elemana geri verir. */
+function releaseFocusTrap() {
+  if (focusTrapContainer && focusTrapHandler) {
+    focusTrapContainer.removeEventListener('keydown', focusTrapHandler);
+  }
+  focusTrapHandler = null;
+  focusTrapContainer = null;
+  if (focusTrapLastFocusedEl && typeof focusTrapLastFocusedEl.focus === 'function') {
+    focusTrapLastFocusedEl.focus();
+  }
+  focusTrapLastFocusedEl = null;
+}
+
+/* =========================================================
    LIGHTBOX — Tam ekran görsel yakınlaştırma
    Ürün görsellerine tıklandığında açılır. Masaüstünde tıklayarak
    veya fare tekerleğiyle, mobilde iki parmakla (pinch) ya da
@@ -349,7 +476,7 @@ function initLightbox() {
   if (document.getElementById('lightboxOverlay')) return;
 
   document.body.insertAdjacentHTML('beforeend', `
-    <div id="lightboxOverlay" class="fixed inset-0 z-[999] bg-ink/95 hidden items-center justify-center">
+    <div id="lightboxOverlay" class="fixed inset-0 z-[999] bg-ink/95 hidden items-center justify-center" role="dialog" aria-modal="true" aria-label="Görsel önizleme">
       <button id="lightboxClose" type="button" aria-label="Kapat" class="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/80 hover:text-white w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors z-10">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
@@ -511,6 +638,7 @@ function openLightbox(images, startIndex) {
   overlay.classList.remove('hidden');
   overlay.classList.add('flex');
   document.body.style.overflow = 'hidden';
+  trapFocus(overlay);
 }
 
 function closeLightbox() {
@@ -519,6 +647,7 @@ function closeLightbox() {
   overlay.classList.add('hidden');
   overlay.classList.remove('flex');
   document.body.style.overflow = '';
+  releaseFocusTrap();
 }
 
 /* =========================================================
@@ -563,7 +692,7 @@ function showToast(message, type = 'info') {
    mesajına dönüştürülüp atölyeye gönderilir.
    ========================================================= */
 
-const CART_STORAGE_KEY = 'mese-atolye-cart';
+const CART_STORAGE_KEY = 'kilicarslan-mobilya-cart';
 
 function getCart() {
   try {
@@ -642,7 +771,7 @@ function initCartUI() {
 
   document.body.insertAdjacentHTML('beforeend', `
     <div id="cartOverlay" class="fixed inset-0 z-[998] bg-ink/50 hidden"></div>
-    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-paper z-[999] shadow-2xl translate-x-full transition-transform duration-300 flex flex-col">
+    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-paper z-[999] shadow-2xl translate-x-full transition-transform duration-300 flex flex-col" role="dialog" aria-modal="true" aria-label="Sepetiniz">
       <div class="flex items-center justify-between px-6 py-5 border-b border-walnut/10">
         <h2 class="font-display text-xl text-walnut">Sepetiniz</h2>
         <button id="cartCloseBtn" type="button" aria-label="Kapat" class="text-walnut/60 hover:text-walnut w-8 h-8 flex items-center justify-center">
@@ -664,6 +793,12 @@ function initCartUI() {
   document.getElementById('cartOverlay').addEventListener('click', closeCart);
   document.getElementById('cartCheckoutBtn').addEventListener('click', checkoutViaWhatsApp);
 
+  document.addEventListener('keydown', (e) => {
+    const drawer = document.getElementById('cartDrawer');
+    if (!drawer || drawer.classList.contains('translate-x-full')) return;
+    if (e.key === 'Escape') closeCart();
+  });
+
   const toggleBtn = document.getElementById('cartToggleBtn');
   if (toggleBtn) toggleBtn.addEventListener('click', openCart);
 
@@ -673,9 +808,12 @@ function initCartUI() {
 function openCart() {
   initCartUI();
   renderCartDrawer();
-  document.getElementById('cartOverlay').classList.remove('hidden');
-  document.getElementById('cartDrawer').classList.remove('translate-x-full');
+  const overlay = document.getElementById('cartOverlay');
+  const drawer = document.getElementById('cartDrawer');
+  overlay.classList.remove('hidden');
+  drawer.classList.remove('translate-x-full');
   document.body.style.overflow = 'hidden';
+  trapFocus(drawer);
 }
 
 function closeCart() {
@@ -685,6 +823,7 @@ function closeCart() {
   overlay.classList.add('hidden');
   drawer.classList.add('translate-x-full');
   document.body.style.overflow = '';
+  releaseFocusTrap();
 }
 
 function renderCartDrawer() {
@@ -697,13 +836,13 @@ function renderCartDrawer() {
   } else {
     wrap.innerHTML = cart.map(item => {
       const visual = item.image
-        ? `<img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}" class="w-full h-full object-cover">`
+        ? `<img src="${sanitizeText(item.image)}" alt="${sanitizeText(item.title)}" class="w-full h-full object-cover">`
         : iconSvg(item.icon, 'w-7 h-7');
       return `
-        <div class="flex gap-3 items-center" data-cart-id="${escapeHTML(item.id)}">
+        <div class="flex gap-3 items-center" data-cart-id="${sanitizeText(item.id)}">
           <div class="w-16 h-16 rounded-lg bg-cream overflow-hidden flex items-center justify-center shrink-0">${visual}</div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-walnut truncate">${escapeHTML(item.title)}</p>
+            <p class="text-sm font-medium text-walnut truncate">${sanitizeText(item.title)}</p>
             <p class="text-xs text-walnutlight">${formatPrice(item.price)}</p>
             <div class="flex items-center gap-2 mt-1">
               <button type="button" class="cart-qty-decrease w-6 h-6 rounded-full border border-walnut/20 text-walnut hover:border-clay hover:text-clay transition-colors">−</button>
@@ -747,7 +886,24 @@ function checkoutViaWhatsApp() {
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-/* Her sayfa yüklendiğinde sepet rozetini (badge) güncel tut. */
+/* =========================================================
+   TEK DOĞRU KAYNAK (Single Source of Truth) — WhatsApp Linkleri
+   Statik HTML'de (footer, sabit buton, "Özel Tasarım" butonu vb.)
+   numarayı elle yazmak yerine, ilgili elemanı data-wa-link ile
+   işaretleyip href'i burada, tek bir yerden (WHATSAPP_NUMBER) doldururuz.
+   Mesaj metni istenirse data-wa-message özniteliğiyle verilebilir.
+   Örnek: <a data-wa-link data-wa-message="Merhaba...">...</a>
+   ========================================================= */
+function initStaticWhatsAppLinks() {
+  document.querySelectorAll('[data-wa-link]').forEach(el => {
+    const message = el.getAttribute('data-wa-message') || '';
+    const url = `https://wa.me/${WHATSAPP_NUMBER}` + (message ? `?text=${encodeURIComponent(message)}` : '');
+    el.setAttribute('href', url);
+  });
+}
+
+/* Her sayfa yüklendiğinde sepet rozetini (badge) ve statik WhatsApp linklerini güncel tut. */
 document.addEventListener('DOMContentLoaded', () => {
   initCartUI();
+  initStaticWhatsAppLinks();
 });
